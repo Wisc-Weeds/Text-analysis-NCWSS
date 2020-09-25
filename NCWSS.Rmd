@@ -1,0 +1,4212 @@
+---
+title: "NCWSS"
+author: "Maxwel Coura Oliveira"
+date: "3/5/2020"
+output: pdf_document
+---
+
+```{r include=FALSE}
+library(textreadr)
+library(readr)
+library(rvest)
+library(downloader)
+library(tidyverse)
+library(tidytext)
+library(pdftools)
+library(dplyr)
+library(wordcloud)
+library(topicmodels)
+library(xml2)
+library(DescTools)
+library(tm)
+library(stringr)
+library(rcorpora)
+```
+
+#2002
+
+```{r}
+co2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/cereals2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+cs2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/corn2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+met2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/equipment2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+ext2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/extension2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+for2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/forage2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+phy2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/physiology2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+turf2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/industrial2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soil2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/soil2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soy2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/soybeans2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+hort2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/sugarbeets2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+eco2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/ecology2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+app2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/applicsymposium2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+res2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/glysymp2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+shi2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/weedshiftsymp2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+
+
+
+nc_2002 <- rbind(co2002, cs2002, met2002, ext2002, for2002, phy2002, soil2002, 
+                 soy2002, turf2002, hort2002, eco2002, app2002, res2002, shi2002)
+```
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2002)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2002[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+```{r}
+authors <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/author2.htm") %>% 
+  html_nodes(xpath = "/html/body/p[.]") %>%
+  html_text() 
+authors <- c(authors)
+authors <- data_frame(authors)
+#tokerization
+authors_tokens <- authors %>%
+  unnest_tokens(words, authors)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r}
+# first names
+first <- corpora("humans/firstNames")
+stopwords_first <- c(first$firstNames)
+stopwords_first <- tolower(stopwords_first)
+  
+  
+# cities and states
+geography <- corpora("geography/us_cities")
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", "proceedings", "ncwss",
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_tokens_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words02 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2002")
+```
+
+
+```{r} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+#2003
+
+```{r}
+co2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Cereals%20and%20Oilseeds.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+cs2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Corn%20and%20Sorghum.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+met2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Equipment%20and%20Application.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+ext2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Extension.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+for2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Forages%20and%20Range.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+phy2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Herbicide%20Phy.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soil2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Soil%20and%20Environment.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soy2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Soybean.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+hort2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Sugarbeet,%20hort,%20ornamental.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+eco2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/weed%20ecology.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+sym22003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/symposia.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+
+
+
+nc_2003 <- rbind(co2003, cs2003, met2003, ext2003, for2003, phy2003, soil2003, 
+                 soy2003, hort2003, eco2003, sym22003)
+```
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2003)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2003[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+```{r}
+authors <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/author%20index.htm") %>% 
+  html_nodes(xpath = "/html/body/ilayer/table[2]") %>%
+  html_text() 
+authors <- c(authors)
+authors <- data_frame(authors)
+#tokerization
+authors_tokens <- authors %>%
+  unnest_tokens(words, authors)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r}
+# first names
+first <- corpora("humans/firstNames")
+stopwords_first <- c(first$firstNames)
+stopwords_first <- tolower(stopwords_first)
+  
+  
+# cities and states
+geography <- corpora("geography/us_cities")
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", "proceedings", "ncwss",
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_tokens_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words03 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2003")
+```
+
+
+```{r} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+#2004
+
+
+
+
+```{r}
+co2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/cereals2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+cs2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/corn2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+met2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/equipment2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+ext2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/extension2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+for2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/forage2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+phy2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/physiology2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+tur2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/industrial2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+inv2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/invasives2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soy2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/soybean2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+hort2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/sugarbeets2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+eco2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/ecology2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+tur22004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/herbtolturf2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+iv22004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/invasives2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+seed2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/seedbankdynam2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+sind2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/seedindustry2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+
+
+nc_2004 <- rbind(co2004, cs2004, met2004, ext2004, for2004, phy2004, tur2004, inv2004, 
+                 soy2004, hort2004, eco2004, tur22004, iv22004, seed2004, sind2004)
+```
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2004)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2004[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+```{r}
+authors <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/authors.htm") %>% 
+  html_nodes(xpath = "//table[2]") %>%
+  html_text() 
+authors <- c(authors)
+authors <- data_frame(authors)
+#tokerization
+authors_tokens <- authors %>%
+  unnest_tokens(words, authors)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r}
+# first names
+first <- corpora("humans/firstNames")
+stopwords_first <- c(first$firstNames)
+stopwords_first <- tolower(stopwords_first)
+  
+  
+# cities and states
+geography <- corpora("geography/us_cities")
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", "proceedings", "ncwss",
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_tokens_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words04 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2004")
+```
+
+
+```{r} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+
+#2005
+
+
+
+
+```{r}
+co2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/cereals.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+cs2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/corn.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+met2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/equipment.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+ext2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/extension.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+for2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/forage.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+phy2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/physiology.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+tur2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/industrial.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+inv2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/invasive.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soil2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/soil.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soy2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/soybean.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+hort2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/sugarbeets.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+eco2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/ecolbiol.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+man2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/ecolmanage.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+
+
+
+nc_2005 <- rbind(co2005, cs2005, met2005, ext2005, for2005, phy2005, tur2005, inv2005, soil2005,
+                 soy2005, hort2005, eco2005, man2005)
+```
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2005)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2005[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+```{r}
+authors <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/author.htm") %>% 
+  html_nodes(xpath = "//table[2]") %>%
+  html_text() 
+authors <- c(authors)
+authors <- data_frame(authors)
+#tokerization
+authors_tokens <- authors %>%
+  unnest_tokens(words, authors)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r}
+# first names
+first <- corpora("humans/firstNames")
+stopwords_first <- c(first$firstNames)
+stopwords_first <- tolower(stopwords_first)
+  
+  
+# cities and states
+geography <- corpora("geography/us_cities")
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", "proceedings", "ncwss",
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_tokens_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words05 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2005")
+```
+
+
+```{r} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(5,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+# 2006
+
+```{r}
+pdf_06 <- pdf_text("nc2006.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_06[1:20] 
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_06[21:28]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities")
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", "morris",
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words06 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2006")
+```
+
+
+```{r} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+#2007
+
+
+
+
+
+```{r}
+ag2007 <- read_html("http://ncwss.org/proceed/2007/agronomic.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+ex2007 <- read_html("http://ncwss.org/proceed/2007/extension.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+phy2007 <- read_html("http://ncwss.org/proceed/2007/physiology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+hort2007 <- read_html("http://ncwss.org/proceed/2007/horticulture.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+inv2007 <- read_html("http://ncwss.org/proceed/2007/invasiveweeds.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+bem2007 <- read_html("http://ncwss.org/proceed/2007/biology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+cm2007 <- read_html("http://ncwss.org/proceed/2007/communication.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+gf2007 <- read_html("http://ncwss.org/proceed/2007/geneflow.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+
+nc_2007 <- rbind(ag2007, ex2007, phy2007, hort2007, inv2007, bem2007,  cm2007, gf2007)
+```
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2007)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2007[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+
+
+```{r}
+# first names
+first <- corpora("humans/firstNames")
+stopwords_first <- c(first$firstNames)
+stopwords_first <- tolower(stopwords_first)
+  
+  
+# cities and states
+geography <- corpora("geography/us_cities")
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(title_tokens$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words07 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2007")
+```
+
+
+```{r} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+#2008
+
+
+
+
+
+```{r}
+ag2008 <- read_html("http://ncwss.org/proceed/2008/agronomic.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+ex2008 <- read_html("http://ncwss.org/proceed/2008/extension.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+phy2008 <- read_html("http://ncwss.org/proceed/2008/physiology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+hort2008 <- read_html("http://ncwss.org/proceed/2008/horticulture.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+inv2008 <- read_html("http://ncwss.org/proceed/2008/invasiveweeds.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+bem2008 <- read_html("http://ncwss.org/proceed/2008/biology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+swr2008 <- read_html("http://ncwss.org/proceed/2008/HRC%20Symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+siw2008 <- read_html("http://ncwss.org/proceed/2008/IWM%20symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+siv2008 <- read_html("http://ncwss.org/proceed/2008/MIPN%20Symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+
+nc_2008 <- rbind(ag2008, ex2008, phy2008, hort2008, inv2008, bem2008, swr2008, siw2008, siv2008)
+```
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2008)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2008[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+```{r}
+# first names
+first <- corpora("humans/firstNames")
+stopwords_first <- c(first$firstNames)
+stopwords_first <- tolower(stopwords_first)
+  
+  
+# cities and states
+geography <- corpora("geography/us_cities")
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(title_tokens$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words08 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2008")
+```
+
+
+```{r} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+# 2009
+
+```{r}
+ag2009 <- read_html("http://ncwss.org/proceed/2009/agronomic.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+ex2009 <- read_html("http://ncwss.org/proceed/2009/extension.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+phy2009 <- read_html("http://ncwss.org/proceed/2009/physiology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+hort2009 <- read_html("http://ncwss.org/proceed/2009/horticulture.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+inv2009 <- read_html("http://ncwss.org/proceed/2009/invasiveweeds.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+bem2009 <- read_html("http://ncwss.org/proceed/2009/biology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+lea2009 <- read_html("http://ncwss.org/proceed/2009/Learning%20store%20symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+st2009 <- read_html("http://ncwss.org/proceed/2009/statistics%20symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+
+
+nc_2009 <- rbind(ag2009, ex2009, phy2009, hort2009, inv2009, bem2009, lea2009, st2009)
+```
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2009)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2009[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+```{r}
+# first names
+first <- corpora("humans/firstNames")
+stopwords_first <- c(first$firstNames)
+stopwords_first <- tolower(stopwords_first)
+  
+  
+# cities and states
+geography <- corpora("geography/us_cities")
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(title_tokens$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words09 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2009")
+```
+
+
+```{r} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+nc2010 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2010-Proceedings.pdf", "nc2010.pdf", mode = "wb")
+nc2011 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2011-Proceedings.pdf", "nc2011.pdf", mode = "wb")
+nc2012 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2012-Proceedings.pdf", "nc2012.pdf", mode = "wb")
+nc2013 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2013-Proceedings.pdf", "nc2013.pdf", mode = "wb")
+nc2014 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2014-Proceedings.pdf", "nc2014.pdf", mode = "wb")
+nc2015 <- download("http://ncwss.org/wp-content/uploads/2015/03/2015-North-Central-Weed-Science-Society-Proceedings-Final.pdf", "nc2015.pdf", mode = "wb")
+nc2016 <- download("http://ncwss.org/wp-content/uploads/2016-North-Central-Weed-Science-Society-Proceedings.pdf", "nc2016.pdf", mode = "wb")
+nc2017 <- download("https://ncwss.org/wp-content/uploads/2017-North-Central-Weed-Science-Society-Proceedings-w_attendees.pdf", "nc2017.pdf", mode = "wb")
+nc2018 <- download("https://ncwss.org/wp-content/uploads/NCWSS-Annual-Meeting-Proceedings-2018.pdf", "nc2018.pdf", mode = "wb")
+nc2019 <- download("https://ncwss.org/wp-content/uploads/NCWSS-2019-Proceedings-FINAL.pdf", "nc2019.pdf", mode = "wb")
+```
+
+# 2010
+
+```{r}
+pdf_10 <- pdf_text("nc2010.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_10[1:13] 
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+```{r}
+head(title_tokens, n=5)
+```
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_10[85:91]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words10 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2010")
+```
+
+
+```{r} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+# 2011
+
+```{r}
+pdf_11 <- pdf_text("nc2011.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_11[3:23] 
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_11[152:157]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r fig.cap= "Most frequent words (n=10+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words11 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2011")
+```
+
+
+
+```{r} 
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+# 2012
+
+```{r}
+pdf_12 <- pdf_text("nc2012.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_12[2:15] 
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_12[101:104]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words12 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2012")
+```
+
+```{r} 
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+# 2013
+
+```{r}
+pdf_13 <- pdf_text("nc2013.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_13[2:18] 
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_13[122:125]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + ylim(0,50) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words13 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2013")
+```
+
+```{r} 
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+# 2014
+
+```{r}
+pdf_14 <- pdf_text("nc2014.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_14[2:14] 
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_14[87:90]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words14 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2014")
+```
+
+
+```{r} 
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+# 2015
+
+```{r}
+pdf_15 <- pdf_text("nc2015.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_15[3:17] # need to check pdf (overlap)
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_15[93:98]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words15 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2015")
+```
+
+```{r} 
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+
+# 2016
+
+```{r}
+pdf_16 <- pdf_text("nc2016.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_16[2:15] # need to check pdf (overlap)
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_16[90:93]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words16 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2016")
+```
+
+```{r} 
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+# 2017
+
+```{r}
+pdf_17 <- pdf_text("nc2017.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_17[2:17] # need to check pdf (overlap)
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_17[102:107]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle", "wetherford")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words17 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2017")
+```
+
+```{r} 
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+# 2018
+
+```{r}
+pdf_18 <- pdf_text("nc2018.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_18[2:15] # need to check pdf (overlap)
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_18[108:112]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", "wetherford",
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle", "linconln")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+```{r}
+words18 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1)  %>% 
+  mutate(year = "2018") 
+```
+
+```{r} 
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+
+# 2019
+
+```{r}
+pdf_18 <- pdf_text("nc2019.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title <- pdf_19[2:15] # need to check pdf (overlap)
+```
+
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title)) {
+  print(i)
+  titlelines <- data.frame(names = title[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+```
+
+```{r}
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+```
+
+
+```{r}
+title_tokens <- titledm %>%
+  unnest_tokens(words, names)
+```
+
+```{r}
+head(title_tokens, n=5)
+```
+
+```{r warning=FALSE, include=FALSE}
+authors <- pdf_18[108:112]
+
+authorsdm <- data.frame()
+
+for (i in 1:length(authors)) {
+  print(i)
+  authorslines <- data.frame(names = authors[[i]])
+  authorsdm <- bind_rows(authorsdm, authorslines)
+} 
+
+#tokerization
+authors_tokens <- authorsdm %>%
+  unnest_tokens(words, names)
+```
+
+```{r warning=FALSE}
+titles_tokens_clean <- anti_join(title_tokens, authors_tokens, by = "words")
+```
+
+
+```{r include=FALSE}
+rm_author <- c(108:112) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+```
+
+
+```{r}
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+```
+
+
+```{r}
+titles_clean_clean <- anti_join(titles_tokens_clean, rm_authors, by = "words")
+```
+
+
+
+```{r}
+head(titles_clean_clean, n=10)
+```
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", 
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+```{r}
+title_source <- VectorSource(titles_clean_clean$words)
+title_corpus <- VCorpus(title_source)
+```
+
+
+
+```{r}
+# this code section will take long (~3 min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+```
+
+
+
+```{r}
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+title_dt <- data.frame(word = names(title_v),freq=title_v)
+```
+
+
+```{r}
+title_dt$word <- gsub("twofourd" , "2,4-D" , title_dt$word)
+```
+
+
+```{r}
+title_dt %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+
+```{r} 
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+
+```{r}
+Data <- bind_rows(words02, words03, words04, words05, words06, words08, words09, words10, words11, words12, words13, words14, words15, words16, words17, words18)
+Data$year <- as.numeric(Data$year)
+data <- Data %>% 
+  filter( word == "palmer" | word == "glyphosate" |  word == "dicamba" | word == "resistant")
+```
+
+```{r}
+ggplot(data, aes(x=year, y=freq, color=word)) + geom_line() + geom_point() +
+  theme_bw() + ggsave("weeds.png")
+```
+

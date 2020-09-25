@@ -1,0 +1,1239 @@
+---
+title: "Full"
+author: "Maxwel Coura Oliveira"
+date: "3/9/2020"
+output: html_document
+---
+
+```{r include=FALSE}
+library(textreadr)
+library(readr)
+library(rvest)
+library(downloader)
+library(tidyverse)
+library(tidytext)
+library(pdftools)
+library(dplyr)
+library(wordcloud)
+library(topicmodels)
+library(xml2)
+library(DescTools)
+library(tm)
+library(stringr)
+library(rcorpora)
+```
+
+
+
+```{r}
+#Load data 2002
+
+
+
+
+#Load data 2002
+
+co2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/cereals2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+cs2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/corn2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+met2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/equipment2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+ext2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/extension2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+for2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/forage2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+phy2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/physiology2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+turf2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/industrial2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soil2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/soil2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soy2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/soybeans2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+hort2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/sugarbeets2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+eco2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/ecology2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+app2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/applicsymposium2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+res2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/glysymp2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+shi2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/weedshiftsymp2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+
+nc_2002 <- rbind(co2002, cs2002, met2002, ext2002, for2002, phy2002, soil2002, 
+                 soy2002, turf2002, hort2002, eco2002, app2002, res2002, shi2002)
+
+nc_2002 <- nc_2002 %>% mutate(year = 2002)
+
+
+# #Load data 2003
+co2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Cereals%20and%20Oilseeds.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+cs2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Corn%20and%20Sorghum.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+met2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Equipment%20and%20Application.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+ext2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Extension.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+for2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Forages%20and%20Range.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+phy2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Herbicide%20Phy.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soil2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Soil%20and%20Environment.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soy2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Soybean.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+hort2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Sugarbeet,%20hort,%20ornamental.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+eco2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/weed%20ecology.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+sym22003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/symposia.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+
+
+
+nc_2003 <- rbind(co2003, cs2003, met2003, ext2003, for2003, phy2003, soil2003, 
+                 soy2003, hort2003, eco2003, sym22003)
+
+
+
+# Load 2004
+co2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/cereals2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+cs2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/corn2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+met2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/equipment2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+ext2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/extension2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+for2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/forage2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+phy2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/physiology2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+tur2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/industrial2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+inv2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/invasives2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soy2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/soybean2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+hort2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/sugarbeets2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+eco2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/ecology2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+tur22004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/herbtolturf2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+iv22004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/invasives2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+seed2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/seedbankdynam2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+sind2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/seedindustry2.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+
+
+nc_2004 <- rbind(co2004, cs2004, met2004, ext2004, for2004, phy2004, tur2004, inv2004, 
+                 soy2004, hort2004, eco2004, tur22004, iv22004, seed2004, sind2004)
+
+
+# Load 2005
+
+co2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/cereals.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+cs2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/corn.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+met2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/equipment.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+ext2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/extension.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+for2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/forage.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+phy2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/physiology.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+tur2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/industrial.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+inv2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/invasive.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soil2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/soil.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+soy2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/soybean.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+hort2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/sugarbeets.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+eco2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/ecolbiol.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+man2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/ecolmanage.htm") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+
+
+nc_2005 <- rbind(co2005, cs2005, met2005, ext2005, for2005, phy2005, tur2005, inv2005, soil2005,
+                 soy2005, hort2005, eco2005, man2005)
+
+# Load 2006
+
+ag2006 <- read_html("http://ncwss.org/proceed/2006/agronomic.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+met2006 <- read_html("http://ncwss.org/proceed/2006/application.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+ext2006 <- read_html("http://ncwss.org/proceed/2006/extension.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+for2006 <- read_html("http://ncwss.org/proceed/2006/forestry.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+phy2006 <- read_html("http://ncwss.org/proceed/2006/physiology.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+eco2006 <- read_html("http://ncwss.org/proceed/2006/biology.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+inv2006 <- read_html("http://ncwss.org/proceed/2006/invasiveweeds.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+hort2006 <- read_html("http://ncwss.org/proceed/2006/horticulture.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+adj2006 <- read_html("http://ncwss.org/proceed/2006/adjuvant.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+gen2006 <- read_html("http://ncwss.org/proceed/2006/glyphosatesymposium.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+res2006 <- read_html("http://ncwss.org/proceed/2006/extension.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+inv22006 <- read_html("http://ncwss.org/proceed/2006/invasivesymposium.html") %>% 
+  html_nodes(xpath = "//p[.]") %>%
+  html_text() 
+
+
+nc_2006 <- rbind(ag2006, met2006, ext2006, for2006, phy2006, eco2006, inv2006, hort2006, adj2006,
+                 gen2006, res2006, inv22006)
+
+
+
+
+# Load 2007
+
+
+ag2007 <- read_html("http://ncwss.org/proceed/2007/agronomic.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+ex2007 <- read_html("http://ncwss.org/proceed/2007/extension.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+phy2007 <- read_html("http://ncwss.org/proceed/2007/physiology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+hort2007 <- read_html("http://ncwss.org/proceed/2007/horticulture.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+inv2007 <- read_html("http://ncwss.org/proceed/2007/invasiveweeds.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+bem2007 <- read_html("http://ncwss.org/proceed/2007/biology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+cm2007 <- read_html("http://ncwss.org/proceed/2007/communication.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+gf2007 <- read_html("http://ncwss.org/proceed/2007/geneflow.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+
+nc_2007 <- rbind(ag2007, ex2007, phy2007, hort2007, inv2007, bem2007,  cm2007, gf2007)
+
+
+# Load 2008
+
+ag2008 <- read_html("http://ncwss.org/proceed/2008/agronomic.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+ex2008 <- read_html("http://ncwss.org/proceed/2008/extension.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+phy2008 <- read_html("http://ncwss.org/proceed/2008/physiology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+hort2008 <- read_html("http://ncwss.org/proceed/2008/horticulture.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+inv2008 <- read_html("http://ncwss.org/proceed/2008/invasiveweeds.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+bem2008 <- read_html("http://ncwss.org/proceed/2008/biology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+swr2008 <- read_html("http://ncwss.org/proceed/2008/HRC%20Symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+siw2008 <- read_html("http://ncwss.org/proceed/2008/IWM%20symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+siv2008 <- read_html("http://ncwss.org/proceed/2008/MIPN%20Symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+
+nc_2008 <- rbind(ag2008, ex2008, phy2008, hort2008, inv2008, bem2008, swr2008, siw2008, siv2008)
+
+
+
+# Load 2009
+
+ag2009 <- read_html("http://ncwss.org/proceed/2009/agronomic.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+ex2009 <- read_html("http://ncwss.org/proceed/2009/extension.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+phy2009 <- read_html("http://ncwss.org/proceed/2009/physiology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+hort2009 <- read_html("http://ncwss.org/proceed/2009/horticulture.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+inv2009 <- read_html("http://ncwss.org/proceed/2009/invasiveweeds.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+bem2009 <- read_html("http://ncwss.org/proceed/2009/biology.html") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+lea2009 <- read_html("http://ncwss.org/proceed/2009/Learning%20store%20symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+st2009 <- read_html("http://ncwss.org/proceed/2009/statistics%20symposium.htm") %>% 
+  html_nodes(xpath = "//strong") %>%
+  html_text() 
+
+
+nc_2009 <- rbind(ag2009, ex2009, phy2009, hort2009, inv2009, bem2009, lea2009, st2009)
+
+
+
+
+# Load 2010 to 2019
+
+#nc2010 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2010-Proceedings.pdf", "nc2010.pdf", mode = "wb")
+#nc2011 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2011-Proceedings.pdf", "nc2011.pdf", mode = "wb")
+#nc2012 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2012-Proceedings.pdf", "nc2012.pdf", mode = "wb")
+#nc2013 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2013-Proceedings.pdf", "nc2013.pdf", mode = "wb")
+#nc2014 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2014-Proceedings.pdf", "nc2014.pdf", mode = "wb")
+#nc2015 <- download("http://ncwss.org/wp-content/uploads/2015/03/2015-North-Central-Weed-Science-Society-Proceedings-Final.pdf", "nc2015.pdf", mode = "wb")
+#nc2016 <- download("http://ncwss.org/wp-content/uploads/2016-North-Central-Weed-Science-Society-Proceedings.pdf", "nc2016.pdf", mode = "wb")
+#nc2017 <- download("https://ncwss.org/wp-content/uploads/2017-North-Central-Weed-Science-Society-Proceedings-w_attendees.pdf", "nc2017.pdf", mode = "wb")
+#nc2018 <- download("https://ncwss.org/wp-content/uploads/NCWSS-Annual-Meeting-Proceedings-2018.pdf", "nc2018.pdf", mode = "wb")
+#nc2019 <- download("https://ncwss.org/wp-content/uploads/NCWSS-2019-Proceedings-FINAL.pdf", "nc2019.pdf", mode = "wb")
+
+
+# Load 2010
+nc_2010 <- pdf_text("nc2010.pdf") %>% 
+  strsplit(split = "\n")
+title10 <- nc_2010[1:13] 
+
+
+# Load 2011
+nc_2011 <- pdf_text("nc2011.pdf") %>% 
+  strsplit(split = "\n")
+title11 <- nc_2011[3:23] 
+
+
+# Load 2012
+nc_2012 <- pdf_text("nc2012.pdf") %>% 
+  strsplit(split = "\n")
+title12 <- nc_2012[2:15] 
+
+
+# Load 2013
+nc_2013 <- pdf_text("nc2013.pdf") %>% 
+  strsplit(split = "\n")
+title13 <- nc_2013[2:18]
+
+
+# Load 2014
+nc_2014 <- pdf_text("nc2014.pdf") %>% 
+  strsplit(split = "\n")
+title14 <- nc_2014[2:14] 
+
+
+# Load 2015
+nc_2015 <- pdf_text("nc2015.pdf") %>% 
+  strsplit(split = "\n")
+title15 <- nc_2015[3:17] # need to check pdf (overlap)
+
+
+# Load 2016
+nc_2016 <- pdf_text("nc2016.pdf") %>% 
+  strsplit(split = "\n")
+title16 <- nc_2016[2:15]
+
+
+# Load 2017
+nc_2017 <- pdf_text("nc2017.pdf") %>% 
+  strsplit(split = "\n")
+title17 <- nc_2017[2:17] 
+
+
+# Load 2018
+nc_2018 <- pdf_text("nc2018.pdf") %>% 
+  strsplit(split = "\n")
+title18 <- nc_2018[2:15] # need to check pdf (overlap)
+```
+
+
+```{r}
+# Authors 2001
+authors01 <- read_html("http://ncwss.org/proceed/2001/indexes/author.htm") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors01 <- c(authors01)
+authors01 <- data_frame(authors01)
+#tokerization
+authors_tokens01 <- authors01 %>%
+  unnest_tokens(words, authors01)
+
+
+# Authors 2002
+authors02 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/author2.htm") %>% 
+  html_nodes(xpath = "/html/body/p[.]") %>%
+  html_text() 
+authors02 <- c(authors02)
+authors02 <- data_frame(authors02)
+#tokerization
+authors_tokens02 <- authors02 %>%
+  unnest_tokens(words, authors02)
+
+
+# Authors 2003
+authors03 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/author%20index.htm") %>% 
+  html_nodes(xpath = "/html/body/ilayer/table[2]") %>%
+  html_text() 
+authors03 <- c(authors03)
+authors03 <- data_frame(authors03)
+#tokerization
+authors_tokens03 <- authors03 %>%
+  unnest_tokens(words, authors03)
+
+
+# Authors 2004
+authors04 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/authors.htm") %>% 
+  html_nodes(xpath = "//table[2]") %>%
+  html_text() 
+authors04 <- c(authors04)
+authors04 <- data_frame(authors04)
+#tokerization
+authors_tokens04 <- authors04 %>%
+  unnest_tokens(words, authors04)
+
+
+# Authors 2005
+authors05 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/author.htm") %>% 
+  html_nodes(xpath = "//table[2]") %>%
+  html_text() 
+authors05 <- c(authors05)
+authors05 <- data_frame(authors05)
+#tokerization
+authors_tokens05 <- authors05 %>%
+  unnest_tokens(words, authors05)
+
+
+# Authors 2006
+
+authors06 <- read_html("http://ncwss.org/proceed/2006/authorindex.html") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors06 <- c(authors06)
+authors06 <- data_frame(authors06)
+#tokerization
+authors_tokens06 <- authors06 %>%
+  unnest_tokens(words, authors06)
+
+
+
+# Authors 2007
+authors07 <- read_html("http://ncwss.org/proceed/2007/authorindex.html") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors07 <- c(authors07)
+authors07 <- data_frame(authors07)
+#tokerization
+authors_tokens07 <- authors07 %>%
+  unnest_tokens(words, authors07)
+
+
+
+
+# Authors 2008
+authors08 <- read_html("http://ncwss.org/proceed/2008/authorindex.html") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors08 <- c(authors08)
+authors08 <- data_frame(authors08)
+#tokerization
+authors_tokens08 <- authors08 %>%
+  unnest_tokens(words, authors08)
+
+
+# Authors 2009
+authors09 <- read_html("http://ncwss.org/proceed/2009/authorindex.html") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors09 <- c(authors09)
+authors09 <- data_frame(authors09)
+#tokerization
+authors_tokens09 <- authors09 %>%
+  unnest_tokens(words, authors09)
+
+
+# Authors 2010
+authors10 <- nc_2010[85:91]
+
+authorsdm10 <- data.frame()
+
+for (i in 1:length(authors10)) {
+  print(i)
+  authorslines <- data.frame(names = authors10[[i]])
+  authorsdm10 <- bind_rows(authorsdm10, authorslines)
+} 
+#tokerization
+authors_tokens10 <- authorsdm10 %>%
+  unnest_tokens(words, names)
+
+
+# Authors 2011
+authors11 <- nc_2011[152:157]
+
+authorsdm11 <- data.frame()
+
+for (i in 1:length(authors11)) {
+  print(i)
+  authorslines <- data.frame(names = authors11[[i]])
+  authorsdm11 <- bind_rows(authorsdm11, authorslines)
+} 
+
+#tokerization
+authors_tokens11 <- authorsdm11 %>%
+  unnest_tokens(words, names)
+
+
+# Authors 2012
+authors12 <- nc_2012[101:104]
+
+authorsdm12 <- data.frame()
+
+for (i in 1:length(authors12)) {
+  print(i)
+  authorslines <- data.frame(names = authors12[[i]])
+  authorsdm12 <- bind_rows(authorsdm12, authorslines)
+} 
+
+#tokerization
+authors_tokens12 <- authorsdm12 %>%
+  unnest_tokens(words, names)
+
+
+
+# Authors 2013
+authors13 <- nc_2013[122:125]
+
+authorsdm13 <- data.frame()
+
+for (i in 1:length(authors13)) {
+  print(i)
+  authorslines <- data.frame(names = authors13[[i]])
+  authorsdm13 <- bind_rows(authorsdm13, authorslines)
+} 
+
+#tokerization
+authors_tokens13 <- authorsdm13 %>%
+  unnest_tokens(words, names)
+
+
+
+
+
+
+
+
+# Authors 2014
+authors14 <- nc_2014[87:90]
+
+authorsdm14 <- data.frame()
+
+for (i in 1:length(authors14)) {
+  print(i)
+  authorslines <- data.frame(names = authors14[[i]])
+  authorsdm14 <- bind_rows(authorsdm14, authorslines)
+} 
+
+#tokerization
+authors_tokens14 <- authorsdm14 %>%
+  unnest_tokens(words, names)
+
+
+
+
+
+
+
+# Authors 2015
+authors15 <- nc_2015[93:98]
+
+authorsdm15 <- data.frame()
+
+for (i in 1:length(authors15)) {
+  print(i)
+  authorslines <- data.frame(names = authors15[[i]])
+  authorsdm15 <- bind_rows(authorsdm15, authorslines)
+} 
+
+#tokerization
+authors_tokens15 <- authorsdm15 %>%
+  unnest_tokens(words, names)
+
+
+
+
+
+
+
+# Authors 2016
+authors16 <- nc_2016[90:93]
+
+authorsdm16 <- data.frame()
+
+for (i in 1:length(authors16)) {
+  print(i)
+  authorslines <- data.frame(names = authors16[[i]])
+  authorsdm16 <- bind_rows(authorsdm16, authorslines)
+} 
+
+#tokerization
+authors_tokens16 <- authorsdm16 %>%
+  unnest_tokens(words, names)
+
+
+
+
+
+
+# Authors 2017
+authors17 <- nc_2017[102:107]
+
+authorsdm17 <- data.frame()
+
+for (i in 1:length(authors17)) {
+  print(i)
+  authorslines <- data.frame(names = authors17[[i]])
+  authorsdm17 <- bind_rows(authorsdm17, authorslines)
+} 
+
+#tokerization
+authors_tokens17 <- authorsdm17 %>%
+  unnest_tokens(words, names)
+
+
+
+
+
+
+
+
+
+# Authors 2018
+authors18 <- nc_2018[108:112]
+
+authorsdm18 <- data.frame()
+
+for (i in 1:length(authors18)) {
+  print(i)
+  authorslines <- data.frame(names = authors18[[i]])
+  authorsdm18 <- bind_rows(authorsdm18, authorslines)
+} 
+
+#tokerization
+authors_tokens18 <- authorsdm18 %>%
+  unnest_tokens(words, names)
+
+```
+
+
+```{r}
+authors_tokens <- rbind(authors_tokens01, authors_tokens02, authors_tokens03, authors_tokens04, 
+                    authors_tokens05, authors_tokens06, authors_tokens07, authors_tokens08, 
+                    authors_tokens09, authors_tokens10, authors_tokens11, authors_tokens12, authors_tokens13, authors_tokens14, authors_tokens15, authors_tokens16, authors_tokens17, authors_tokens18)
+```
+
+
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", "wetherford",
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle", "linconln")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+
+
+# 2002
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2002)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2002[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens02 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean02 <- anti_join(titles_tokens_clean02, authors_tokens, by = "words")
+titles_tokens_clean02 <- titles_tokens_clean02 %>% mutate(year = 2002)
+```
+
+
+# 2003
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2003)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2003[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens03 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean03 <- anti_join(title_tokens03, authors_tokens, by = "words")
+titles_tokens_clean03 <- titles_tokens_clean03 %>% mutate(year = 2003)
+```
+
+
+
+# 2004
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2004)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2004[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens04 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean04 <- anti_join(title_tokens04, authors_tokens, by = "words")
+titles_tokens_clean04 <- titles_tokens_clean04 %>% mutate(year = 2004)
+```
+
+
+
+# 2005 # Do not work
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2005)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2005[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens05 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean05 <- anti_join(title_tokens05, authors_tokens, by = "words")
+titles_tokens_clean05 <- titles_tokens_clean05 %>% mutate(year = 2005)
+```
+
+
+
+
+# 2006
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2006)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2006[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens06 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean06 <- anti_join(title_tokens06, authors_tokens, by = "words")
+titles_tokens_clean06 <- titles_tokens_clean06 %>% mutate(year = 2006)
+```
+
+
+
+# 2007
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2007)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2007[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens07 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean07 <- anti_join(title_tokens07, authors_tokens, by = "words")
+titles_tokens_clean07 <- titles_tokens_clean07 %>% mutate(year = 2007)
+```
+
+
+# 2008
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2008)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2008[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens08 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean08 <- anti_join(title_tokens08, authors_tokens, by = "words")
+titles_tokens_clean08 <- titles_tokens_clean08 %>% mutate(year = 2008)
+```
+
+
+# 2009
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2009)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2009[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens09 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean09 <- anti_join(title_tokens09, authors_tokens, by = "words")
+titles_tokens_clean09 <- titles_tokens_clean09 %>% mutate(year = 2009)
+```
+
+
+
+
+# 2010
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(nc_2010)) {
+  print(i)
+  titlelines <- data.frame(names = nc_2010[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens10 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean10 <- anti_join(title_tokens10, authors_tokens, by = "words")
+titles_tokens_clean10 <- titles_tokens_clean10 %>% mutate(year = 2010)
+```
+
+
+
+
+# 2011
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title11)) {
+  print(i)
+  titlelines <- data.frame(names = title11[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens11 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean11 <- anti_join(title_tokens11, authors_tokens, by = "words")
+titles_tokens_clean11 <- titles_tokens_clean11 %>% mutate(year = 2011)
+```
+
+
+
+# 2012
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title12)) {
+  print(i)
+  titlelines <- data.frame(names = title12[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens12 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean12 <- anti_join(title_tokens12, authors_tokens, by = "words")
+titles_tokens_clean12 <- titles_tokens_clean12 %>% mutate(year = 2012)
+```
+
+
+
+# 2013
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title13)) {
+  print(i)
+  titlelines <- data.frame(names = title13[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens13 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean13 <- anti_join(title_tokens13, authors_tokens, by = "words")
+titles_tokens_clean13 <- titles_tokens_clean13 %>% mutate(year = 2013)
+```
+
+
+
+
+
+
+
+# 2014
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title14)) {
+  print(i)
+  titlelines <- data.frame(names = title14[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens14 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean14 <- anti_join(title_tokens14, authors_tokens, by = "words")
+titles_tokens_clean14 <- titles_tokens_clean14 %>% mutate(year = 2014)
+```
+
+
+
+# 2015
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title15)) {
+  print(i)
+  titlelines <- data.frame(names = title15[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens15 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean15 <- anti_join(title_tokens15, authors_tokens, by = "words")
+titles_tokens_clean15 <- titles_tokens_clean15 %>% mutate(year = 2015)
+```
+
+
+
+# 2016
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title16)) {
+  print(i)
+  titlelines <- data.frame(names = title16[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens16 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean16 <- anti_join(title_tokens16, authors_tokens, by = "words")
+titles_tokens_clean16 <- titles_tokens_clean16 %>% mutate(year = 2016)
+```
+
+
+
+# 2017
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title17)) {
+  print(i)
+  titlelines <- data.frame(names = title17[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens17 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean17 <- anti_join(title_tokens17, authors_tokens, by = "words")
+titles_tokens_clean17 <- titles_tokens_clean17 %>% mutate(year = 2017)
+```
+
+
+
+# 2018
+
+```{r warning=FALSE, include=FALSE}
+titledm <- data.frame() # as data frame
+
+for (i in 1:length(title18)) {
+  print(i)
+  titlelines <- data.frame(names = title18[[i]])
+  titledm <- bind_rows(titledm, titlelines)
+} 
+
+
+titledm$names <- gsub("2,4-D" , "twofourd" , titledm$names)
+
+
+title_tokens18 <- titledm %>%
+  unnest_tokens(words, names)
+
+
+titles_tokens_clean18 <- anti_join(title_tokens18, authors_tokens, by = "words")
+titles_tokens_clean18 <- titles_tokens_clean18 %>% mutate(year = 2018)
+```
+
+
+```{r}
+titles_tokens_clean <- rbind(titles_tokens_clean02, titles_tokens_clean03, titles_tokens_clean04, titles_tokens_clean05, titles_tokens_clean06, titles_tokens_clean07, titles_tokens_clean08, titles_tokens_clean09, titles_tokens_clean10, titles_tokens_clean11, titles_tokens_clean12, titles_tokens_clean13, titles_tokens_clean14, titles_tokens_clean15, titles_tokens_clean16, titles_tokens_clean17, titles_tokens_clean18)
+```
+

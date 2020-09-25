@@ -1,0 +1,1653 @@
+---
+title: "AbrastractTitles"
+author: "Maxwel Coura Oliveira"
+date: "3/9/2020"
+output: html_document
+---
+
+```{r include=FALSE}
+library(readr)
+library(dplyr)
+library(rvest)
+library(tidyverse)
+library(data.table)
+library(xml2)
+library(pdftools)
+library(tm)
+library(ggplot2)
+library(igraph)
+library(topicmodels)
+library(wordcloud)
+library(stringr)
+library(tidytext)
+library(textreadr)
+library(readr)
+library(rvest)
+library(downloader)
+library(tidyverse)
+library(tidytext)
+library(pdftools)
+library(dplyr)
+library(wordcloud)
+library(topicmodels)
+library(xml2)
+library(DescTools)
+library(tm)
+#library(stringr)
+library(rcorpora)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2019
+pdf_19 <- pdf_text("nc2019.pdf") %>% 
+  strsplit(split = "\n")
+
+title19 <- pdf_19[2:223] 
+
+titledm19 <- data.frame() # as data frame
+
+for (i in 1:length(title19)) {
+  print(i) 
+  titlelines <- data.frame(names = title19[[i]])
+  titledm19 <- bind_rows(titledm19, titlelines)
+} 
+titledm19$names <- gsub("2,4-D" , "twofourd" , titledm19$names)
+title_tokens19 <- titledm19 %>%
+  unnest_tokens(words, names)
+
+title_tokens19 <- title_tokens19 %>% mutate(year = 2019)
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2018
+pdf_18 <- pdf_text("nc2018.pdf") %>% 
+  strsplit(split = "\n")
+
+title18 <- pdf_18[16:105] 
+
+titledm18 <- data.frame() # as data frame
+
+for (i in 1:length(title18)) {
+  print(i)
+  titlelines <- data.frame(names = title18[[i]])
+  titledm18 <- bind_rows(titledm18, titlelines)
+} 
+titledm18$names <- gsub("2,4-D" , "twofourd" , titledm18$names)
+title_tokens18 <- titledm18 %>%
+  unnest_tokens(words, names)
+
+title_tokens18 <- title_tokens18 %>% mutate(year = 2018)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2017
+pdf_17 <- pdf_text("nc2017.pdf") %>% 
+  strsplit(split = "\n")
+
+title17 <- pdf_17[18:101] 
+
+titledm17 <- data.frame() # as data frame
+
+for (i in 1:length(title17)) {
+  print(i)
+  titlelines <- data.frame(names = title17[[i]])
+  titledm17 <- bind_rows(titledm17, titlelines)
+} 
+titledm17$names <- gsub("2,4-D" , "twofourd" , titledm17$names)
+title_tokens17 <- titledm17 %>%
+  unnest_tokens(words, names)
+
+title_tokens17 <- title_tokens17 %>% mutate(year = 2017)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2016
+pdf_16 <- pdf_text("nc2016.pdf") %>% 
+  strsplit(split = "\n")
+
+title16 <- pdf_16[16:88] 
+
+titledm16 <- data.frame() # as data frame
+
+for (i in 1:length(title16)) {
+  print(i)
+  titlelines <- data.frame(names = title16[[i]])
+  titledm16 <- bind_rows(titledm16, titlelines)
+} 
+titledm16$names <- gsub("2,4-D" , "twofourd" , titledm16$names)
+title_tokens16 <- titledm16 %>%
+  unnest_tokens(words, names)
+
+title_tokens16 <- title_tokens16 %>% mutate(year = 2016)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2015
+pdf_15 <- pdf_text("nc2015.pdf") %>% 
+  strsplit(split = "\n")
+
+title15 <- pdf_15[18:91] 
+
+titledm15 <- data.frame() # as data frame
+
+for (i in 1:length(title15)) {
+  print(i)
+  titlelines <- data.frame(names = title15[[i]])
+  titledm15 <- bind_rows(titledm15, titlelines)
+} 
+titledm15$names <- gsub("2,4-D" , "twofourd" , titledm15$names)
+title_tokens15 <- titledm15 %>%
+  unnest_tokens(words, names)
+
+title_tokens15 <- title_tokens15 %>% mutate(year = 2015)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2014
+pdf_14 <- pdf_text("nc2014.pdf") %>% 
+  strsplit(split = "\n")
+
+title14 <- pdf_14[15:86] 
+
+titledm14 <- data.frame() # as data frame
+
+for (i in 1:length(title14)) {
+  print(i)
+  titlelines <- data.frame(names = title14[[i]])
+  titledm14 <- bind_rows(titledm14, titlelines)
+} 
+titledm14$names <- gsub("2,4-D" , "twofourd" , titledm14$names)
+title_tokens14 <- titledm14 %>%
+  unnest_tokens(words, names)
+
+title_tokens14 <- title_tokens14 %>% mutate(year = 2014)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2013
+pdf_13 <- pdf_text("nc2013.pdf") %>% 
+  strsplit(split = "\n")
+
+title13 <- pdf_13[19:117] 
+
+titledm13 <- data.frame() # as data frame
+
+for (i in 1:length(title13)) {
+  print(i)
+  titlelines <- data.frame(names = title13[[i]])
+  titledm13 <- bind_rows(titledm13, titlelines)
+} 
+titledm13$names <- gsub("2,4-D" , "twofourd" , titledm13$names)
+title_tokens13 <- titledm13 %>%
+  unnest_tokens(words, names)
+
+title_tokens13 <- title_tokens13 %>% mutate(year = 2013)
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2012
+pdf_12 <- pdf_text("nc2012.pdf") %>% 
+  strsplit(split = "\n")
+
+title12 <- pdf_12[16:100] 
+
+titledm12 <- data.frame() # as data frame
+
+for (i in 1:length(title12)) {
+  print(i)
+  titlelines <- data.frame(names = title12[[i]])
+  titledm12 <- bind_rows(titledm12, titlelines)
+} 
+titledm12$names <- gsub("2,4-D" , "twofourd" , titledm12$names)
+title_tokens12 <- titledm12 %>%
+  unnest_tokens(words, names)
+
+title_tokens12 <- title_tokens12 %>% mutate(year = 2012)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2011
+pdf_11 <- pdf_text("nc2011.pdf") %>% 
+  strsplit(split = "\n")
+
+title11 <- pdf_11[24:151] 
+
+titledm11 <- data.frame() # as data frame
+
+for (i in 1:length(title11)) {
+  print(i)
+  titlelines <- data.frame(names = title11[[i]])
+  titledm11 <- bind_rows(titledm11, titlelines)
+} 
+titledm11$names <- gsub("2,4-D" , "twofourd" , titledm11$names)
+title_tokens11 <- titledm11 %>%
+  unnest_tokens(words, names)
+
+title_tokens11 <- title_tokens11 %>% mutate(year = 2011)
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# 2010
+pdf_10 <- pdf_text("nc2010.pdf") %>% 
+  strsplit(split = "\n")
+
+title10 <- pdf_10[14:84] 
+
+titledm10 <- data.frame() # as data frame
+
+for (i in 1:length(title10)) {
+  print(i)
+  titlelines <- data.frame(names = title10[[i]])
+  titledm10 <- bind_rows(titledm10, titlelines)
+} 
+titledm10$names <- gsub("2,4-D" , "twofourd" , titledm10$names)
+title_tokens10 <- titledm10 %>%
+  unnest_tokens(words, names)
+
+title_tokens10 <- title_tokens10 %>% mutate(year = 2010)
+```
+
+```{r}
+library(readr)
+library(dplyr)
+library(rvest)
+library(tidyverse)
+library(data.table)
+library(xml2)
+library(pdftools)
+library(tm)
+library(glue)
+library(pipeR)
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#2009
+
+url_base <- "http://ncwss.org/proceed/2009/grid.html"
+
+urls_2009 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = '//*[@id="feature"]/table/tbody/tr[.]/td[.]/div/strong/a') %>%
+  html_attr(name = "href")
+
+
+hrefs_2009 = urls_2009[urls_2009 %like% ".pdf"]
+
+hrefs_2009 <- paste0("http://ncwss.org/proceed/2009/", hrefs_2009)
+
+
+ncwss_2009 <- lapply(hrefs_2009, pdf_text)
+
+titledm09 <- data.frame() # as data frame
+
+for (i in 1:length(ncwss_2009)) {
+  print(i)
+  titlelines <- data.frame(names = ncwss_2009[[i]])
+  titledm09 <- bind_rows(titledm09, titlelines)
+} 
+
+titledm09$names <- gsub("2,4-D" , "twofourd" , titledm09$names)
+title_tokens09 <- titledm09 %>%
+  unnest_tokens(words, names)
+
+title_tokens09 <- title_tokens09 %>% mutate(year = 2009)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#2008
+url_base <- "http://ncwss.org/proceed/2008/grid.html"
+
+urls_2008 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+
+hrefs_2008 = urls_2008[urls_2008 %like% ".pdf"]
+
+hrefs_2008 <- paste0("http://ncwss.org/proceed/2008/", hrefs_2008)
+ncwss_2008 <- lapply(hrefs_2008, pdf_text)
+
+titledm08 <- data.frame() # as data frame
+
+for (i in 1:length(ncwss_2008)) {
+  print(i)
+  titlelines <- data.frame(names = ncwss_2008[[i]])
+  titledm08 <- bind_rows(titledm08, titlelines)
+} 
+
+titledm08$names <- gsub("2,4-D" , "twofourd" , titledm08$names)
+title_tokens08 <- titledm08 %>%
+  unnest_tokens(words, names)
+
+title_tokens08 <- title_tokens08 %>% mutate(year = 2008)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#2007
+
+url_base <- "http://ncwss.org/proceed/2007/grid.htm"
+
+urls_2007 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+hrefs_2007 = urls_2007[urls_2007 %like% ".pdf"]
+
+hrefs_2007 <- paste0("http://ncwss.org/proceed/2007/", hrefs_2007)
+
+ncwss_2007 <- lapply(hrefs_2007, pdf_text)
+
+
+gf2007 <- download("http://ncwss.org/wp-content/uploads/2015/03/GeneFlow2007Abs.pdf", "gf2007.pdf", mode = "wb")
+
+GFsymp <- pdf_text("gf2007.pdf") %>% 
+  strsplit(split = "\n")
+
+gf <- GFsymp[6:28]
+
+ncwss_2007 <- rbind(ncwss_2007, gf)
+
+titledm07 <- data.frame() # as data frame
+
+for (i in 1:length(ncwss_2007)) {
+  print(i)
+  titlelines <- data.frame(names = ncwss_2007[[i]])
+  titledm07 <- bind_rows(titledm07, titlelines)
+} 
+titledm07$names <- gsub("2,4-D" , "twofourd" , titledm07$names)
+title_tokens07 <- titledm07 %>%
+  unnest_tokens(words, names)
+
+title_tokens07 <- title_tokens07 %>% mutate(year = 2007)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#2006
+
+url_base <- "http://ncwss.org/proceed/2006/grid.html"
+
+urls_2006 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+
+hrefs_2006 = urls_2006[urls_2006 %like% ".pdf"]
+
+hrefs_2006 <- paste0("http://ncwss.org/proceed/2006/", hrefs_2006)
+
+ncwss_2006 <- lapply(hrefs_2006, pdf_text)
+
+
+ncwss_2006 <- lapply(hrefs_2006, pdf_text)
+
+titledm06 <- data.frame() # as data frame
+
+for (i in 1:length(ncwss_2006)) {
+  print(i)
+  titlelines <- data.frame(names = ncwss_2006[[i]])
+  titledm06 <- bind_rows(titledm06, titlelines)
+} 
+titledm06$names <- gsub("2,4-D" , "twofourd" , titledm06$names)
+
+title_tokens06 <- titledm06 %>%
+  unnest_tokens(words, names)
+
+title_tokens06 <- title_tokens06 %>% mutate(year = 2006)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#2005
+
+url_base <- "http://ncwss.org/proceed/2005/proc05/abstracts/grid05.htm"
+
+urls_2005 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+hrefs_2005 = urls_2005[urls_2005 %like% ".pdf"]
+
+hrefs_2005 <- paste0("http://ncwss.org/proceed/2005/proc05/abstracts/", hrefs_2005)
+
+ncwss_2005 <- lapply(hrefs_2005, pdf_text)
+
+
+titledm05 <- data.frame() # as data frame
+
+for (i in 1:length(ncwss_2005)) {
+  print(i)
+  titlelines <- data.frame(names = ncwss_2005[[i]])
+  titledm05 <- bind_rows(titledm05, titlelines)
+} 
+
+titledm05$names <- gsub("2,4-D" , "twofourd" , titledm05$names)
+title_tokens05 <- titledm05 %>%
+  unnest_tokens(words, names)
+
+title_tokens05 <- title_tokens05 %>% mutate(year = 2005)
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#2004
+
+url_base <- "http://ncwss.org/proceed/2004/proc04/abstracts/04grid.htm"
+
+urls_2004 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+hrefs_2004 = urls_2004[urls_2004 %like% ".pdf"]
+
+hrefs_2004 <- paste0("http://ncwss.org/proceed/2004/proc04/abstracts/", hrefs_2004)
+
+
+ncwss_2004 <- lapply(hrefs_2004, pdf_text)
+
+titledm04 <- data.frame() # as data frame
+
+for (i in 1:length(ncwss_2004)) {
+  print(i)
+  titlelines <- data.frame(names = ncwss_2004[[i]])
+  titledm04 <- bind_rows(titledm04, titlelines)
+} 
+titledm04$names <- gsub("2,4-D" , "twofourd" , titledm04$names)
+title_tokens04 <- titledm04 %>%
+  unnest_tokens(words, names)
+
+title_tokens04 <- title_tokens04 %>% mutate(year = 2004)
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#2003
+
+url_base <- "http://ncwss.org/proceed/2003/Proc03/abstracts/03abstracts.htm"
+
+urls_2003 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+hrefs_2003 = urls_2003[urls_2003 %like% ".pdf"]
+
+hrefs_2003 <- gsub("../../", "http://ncwss.org/proceed/2003/", hrefs_2003)
+
+ncwss_2003 <- lapply(hrefs_2003, pdf_text)
+
+
+titledm03 <- data.frame() # as data frame
+
+for (i in 1:length(ncwss_2003)) {
+  print(i)
+  titlelines <- data.frame(names = ncwss_2003[[i]])
+  titledm03 <- bind_rows(titledm03, titlelines)
+} 
+titledm03$names <- gsub("2,4-D" , "twofourd" , titledm03$names)
+title_tokens03 <- titledm03 %>%
+  unnest_tokens(words, names)
+
+title_tokens03 <- title_tokens03 %>% mutate(year = 2003)
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#2002
+
+url_base <- "http://ncwss.org/proceed/2002/Proc2002/abstracts/paperno2.htm"
+
+urls_2002 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+hrefs_2002 = urls_2002[urls_2002 %like% ".pdf"]
+
+hrefs_2002 <- paste0("http://ncwss.org/proceed/2002/Proc2002/abstracts/", hrefs_2002)
+
+ncwss_2002 <- lapply(hrefs_2002, pdf_text)
+
+
+titledm02 <- data.frame() # as data frame
+
+for (i in 1:length(ncwss_2002)) {
+  print(i)
+  titlelines <- data.frame(names = ncwss_2002[[i]])
+  titledm02 <- bind_rows(titledm02, titlelines)
+} 
+titledm02$names <- gsub("2,4-D" , "twofourd" , titledm02$names)
+title_tokens02 <- titledm02 %>%
+  unnest_tokens(words, names)
+
+title_tokens02 <- title_tokens02 %>% mutate(year = 2002)
+```
+
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+#2001
+
+url_base <- "http://ncwss.org/proceed/2001/indexes/paperno.htm"
+
+urls_2001 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+
+
+hrefs_2001 = urls_2001[urls_2001 %like% ".pdf"]
+hrefs_2001 <- gsub("../abstracts/", "http://ncwss.org/proceed/2001/abstracts/", hrefs_2001)
+
+ncwss_2001 <- lapply(hrefs_2001, pdf_text)
+
+
+titledm01 <- data.frame() # as data frame
+
+for (i in 1:length(ncwss_2001)) {
+  print(i)
+  titlelines <- data.frame(names = ncwss_2001[[i]])
+  titledm01 <- bind_rows(titledm01, titlelines)
+} 
+
+titledm01$names <- gsub("2,4-D" , "twofourd" , titledm01$names)
+title_tokens01 <- titledm01 %>%
+  unnest_tokens(words, names)
+
+title_tokens01 <- title_tokens01 %>% mutate(year = 2001)
+```
+
+
+
+
+
+
+```{r}
+abstract_tokens <- rbind(title_tokens01, title_tokens02, title_tokens03, title_tokens04, title_tokens05, title_tokens06, title_tokens07, title_tokens08, title_tokens09, title_tokens10, title_tokens11, title_tokens12, title_tokens13, title_tokens14, title_tokens15, title_tokens16, title_tokens17, title_tokens18, title_tokens19)
+```
+
+
+
+
+```{r}
+# Authors 2001
+authors01 <- read_html("http://ncwss.org/proceed/2001/indexes/author.htm") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors01 <- c(authors01)
+authors01 <- data_frame(authors01)
+#tokerization
+authors_tokens01 <- authors01 %>%
+  unnest_tokens(words, authors01)
+
+
+# Authors 2002
+authors02 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/author2.htm") %>% 
+  html_nodes(xpath = "/html/body/p[.]") %>%
+  html_text() 
+authors02 <- c(authors02)
+authors02 <- data_frame(authors02)
+#tokerization
+authors_tokens02 <- authors02 %>%
+  unnest_tokens(words, authors02)
+
+
+# Authors 2003
+authors03 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/author%20index.htm") %>% 
+  html_nodes(xpath = "/html/body/ilayer/table[2]") %>%
+  html_text() 
+authors03 <- c(authors03)
+authors03 <- data_frame(authors03)
+#tokerization
+authors_tokens03 <- authors03 %>%
+  unnest_tokens(words, authors03)
+
+
+# Authors 2004
+authors04 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/authors.htm") %>% 
+  html_nodes(xpath = "//table[2]") %>%
+  html_text() 
+authors04 <- c(authors04)
+authors04 <- data_frame(authors04)
+#tokerization
+authors_tokens04 <- authors04 %>%
+  unnest_tokens(words, authors04)
+
+
+# Authors 2005
+authors05 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/author.htm") %>% 
+  html_nodes(xpath = "//table[2]") %>%
+  html_text() 
+authors05 <- c(authors05)
+authors05 <- data_frame(authors05)
+#tokerization
+authors_tokens05 <- authors05 %>%
+  unnest_tokens(words, authors05)
+
+
+# Authors 2006
+
+authors06 <- read_html("http://ncwss.org/proceed/2006/authorindex.html") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors06 <- c(authors06)
+authors06 <- data_frame(authors06)
+#tokerization
+authors_tokens06 <- authors06 %>%
+  unnest_tokens(words, authors06)
+
+
+
+# Authors 2007
+authors07 <- read_html("http://ncwss.org/proceed/2007/authorindex.html") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors07 <- c(authors07)
+authors07 <- data_frame(authors07)
+#tokerization
+authors_tokens07 <- authors07 %>%
+  unnest_tokens(words, authors07)
+
+
+
+
+# Authors 2008
+authors08 <- read_html("http://ncwss.org/proceed/2008/authorindex.html") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors08 <- c(authors08)
+authors08 <- data_frame(authors08)
+#tokerization
+authors_tokens08 <- authors08 %>%
+  unnest_tokens(words, authors08)
+
+
+# Authors 2009
+authors09 <- read_html("http://ncwss.org/proceed/2009/authorindex.html") %>% 
+  html_nodes(xpath = "//table[.]") %>%
+  html_text() 
+authors09 <- c(authors09)
+authors09 <- data_frame(authors09)
+#tokerization
+authors_tokens09 <- authors09 %>%
+  unnest_tokens(words, authors09)
+
+
+# Authors 2010
+authors10 <- pdf_10[85:91]
+
+authorsdm10 <- data.frame()
+
+for (i in 1:length(authors10)) {
+  print(i)
+  authorslines <- data.frame(names = authors10[[i]])
+  authorsdm10 <- bind_rows(authorsdm10, authorslines)
+} 
+#tokerization
+authors_tokens10 <- authorsdm10 %>%
+  unnest_tokens(words, names)
+
+
+# Authors 2011
+authors11 <- pdf_11[152:157]
+
+authorsdm11 <- data.frame()
+
+for (i in 1:length(authors11)) {
+  print(i)
+  authorslines <- data.frame(names = authors11[[i]])
+  authorsdm11 <- bind_rows(authorsdm11, authorslines)
+} 
+
+#tokerization
+authors_tokens11 <- authorsdm11 %>%
+  unnest_tokens(words, names)
+
+
+# Authors 2012
+authors12 <- pdf_12[101:104]
+
+authorsdm12 <- data.frame()
+
+for (i in 1:length(authors12)) {
+  print(i)
+  authorslines <- data.frame(names = authors12[[i]])
+  authorsdm12 <- bind_rows(authorsdm12, authorslines)
+} 
+
+#tokerization
+authors_tokens12 <- authorsdm12 %>%
+  unnest_tokens(words, names)
+
+
+
+# Authors 2013
+authors13 <- pdf_13[122:125]
+
+authorsdm13 <- data.frame()
+
+for (i in 1:length(authors13)) {
+  print(i)
+  authorslines <- data.frame(names = authors13[[i]])
+  authorsdm13 <- bind_rows(authorsdm13, authorslines)
+} 
+
+#tokerization
+authors_tokens13 <- authorsdm13 %>%
+  unnest_tokens(words, names)
+
+
+
+# Authors 2014
+authors14 <- pdf_14[87:90]
+
+authorsdm14 <- data.frame()
+
+for (i in 1:length(authors14)) {
+  print(i)
+  authorslines <- data.frame(names = authors14[[i]])
+  authorsdm14 <- bind_rows(authorsdm14, authorslines)
+} 
+
+#tokerization
+authors_tokens14 <- authorsdm14 %>%
+  unnest_tokens(words, names)
+
+
+
+
+# Authors 2015
+authors15 <- pdf_15[93:98]
+
+authorsdm15 <- data.frame()
+
+for (i in 1:length(authors15)) {
+  print(i)
+  authorslines <- data.frame(names = authors15[[i]])
+  authorsdm15 <- bind_rows(authorsdm15, authorslines)
+} 
+
+#tokerization
+authors_tokens15 <- authorsdm15 %>%
+  unnest_tokens(words, names)
+
+
+
+# Authors 2016
+authors16 <- pdf_16[90:93]
+
+authorsdm16 <- data.frame()
+
+for (i in 1:length(authors16)) {
+  print(i)
+  authorslines <- data.frame(names = authors16[[i]])
+  authorsdm16 <- bind_rows(authorsdm16, authorslines)
+} 
+
+#tokerization
+authors_tokens16 <- authorsdm16 %>%
+  unnest_tokens(words, names)
+
+
+
+
+
+# Authors 2017
+authors17 <- pdf_17[102:107]
+
+authorsdm17 <- data.frame()
+
+for (i in 1:length(authors17)) {
+  print(i)
+  authorslines <- data.frame(names = authors17[[i]])
+  authorsdm17 <- bind_rows(authorsdm17, authorslines)
+} 
+
+#tokerization
+authors_tokens17 <- authorsdm17 %>%
+  unnest_tokens(words, names)
+
+
+
+
+# Authors 2018
+authors18 <- pdf_18[108:112]
+
+authorsdm18 <- data.frame()
+
+for (i in 1:length(authors18)) {
+  print(i)
+  authorslines <- data.frame(names = authors18[[i]])
+  authorsdm18 <- bind_rows(authorsdm18, authorslines)
+} 
+
+#tokerization
+authors_tokens18 <- authorsdm18 %>%
+  unnest_tokens(words, names)
+
+
+# Authors 2019
+authors19 <- pdf_19[224:229]
+
+authorsdm19 <- data.frame()
+
+for (i in 1:length(authors19)) {
+  print(i)
+  authorslines <- data.frame(names = authors19[[i]])
+  authorsdm19 <- bind_rows(authorsdm19, authorslines)
+} 
+
+#tokerization
+authors_tokens19 <- authorsdm19 %>%
+  unnest_tokens(words, names)
+
+```
+
+
+```{r}
+authors_tokens <- rbind(authors_tokens01, authors_tokens02, authors_tokens03, authors_tokens04, authors_tokens05, authors_tokens06, authors_tokens07, authors_tokens08, authors_tokens09, authors_tokens10, authors_tokens11, authors_tokens12, authors_tokens13, authors_tokens14, authors_tokens15, authors_tokens16, authors_tokens17, authors_tokens18, authors_tokens19)
+```
+
+
+
+```{r include=FALSE}
+rm_author <- c(1:12) 
+rm_authors_number <-c()
+for (i in 1:length(rm_author)) {
+  print(i)
+  rm_authors_numbers <- c(paste0(authors_tokens$words, i))
+  rm_authors_number <- c(rm_authors_number, rm_authors_numbers)
+}
+
+rm_authors <- data.frame(rm_authors_number) 
+rm_authors <- rename(rm_authors, words = rm_authors_number) 
+rm_authors$words <- as.character(rm_authors$words)
+
+
+authors_tokens <- rbind(authors_tokens, rm_authors)
+```
+
+
+```{r}
+abstract_clean <- anti_join(abstract_tokens, authors_tokens, by = "words")
+```
+
+
+
+
+```{r}
+# cities and states
+geography <- corpora("geography/us_cities") 
+cities <- geography$cities
+stopwords_cities <- c(cities$city) # stop cities words 
+stopwords_cities <- tolower(stopwords_cities)  # making small caps
+stopwords_state <- c(cities$state) # stop state words 
+stopwords_state <- tolower(stopwords_state) # making lowercase
+
+#country
+country <- corpora("geography/countries") # stop country words 
+stopwords_countries <- c(country$countries) # stop countries words 
+stopwords_countries <- tolower(stopwords_countries) # making lowercase
+
+#capitals
+capitals <- corpora("geography/us_state_capitals")
+capitals <- c(capitals$capitals)  # stop US capital words 
+stopwords_capitals <- c(capitals$capital) # stop us capitals words 
+stopwords_capitals <- tolower(stopwords_capitals) # making lowercase
+
+#english
+Enlish <-corpora("words/stopwords/en")  
+stopwords_en <- c(Enlish$stopWords) # stop english words 
+stopwords_en <- tolower(stopwords_en) # making lowercase
+```
+
+```{r}
+# words that we want to avoid in the text analysis
+stop_wssaprogram_words <- c("crop", "university", "universidad", "universidade", "location",    
+                      "agriscience", "usda", "monarchy", "north", "march", "moderator",
+                      "extension", "college", "tech", "time", "student", "contest",
+                      "break", "station", "basf", "division", "ars", "fort", "guelph",
+                      "presenter", "maui", "monday", "tuesday", "wednesday", "thursday",
+                      "oral", "poster", "united", "western", "speaker", "science", "lleida",
+                      "dakota", "agriculture", "service", "laramie", "forest", "piracicaba",
+                      "purdue", "agrilife", "center", "syngenta", "morning", "afternoon",
+                      "agri", "ventenata", "center", "east", "food", "tifton", "adelaide",
+                      "pullman", "resources", "affiliation", "saskatoon", "saskatchewan",   
+                      "moscow", "park", "suite", "west", "corteva", "bayer", "frankfurt",
+                      "cropscience", "beltsville", "south", "northeast", "northern",  
+                      "northwest", "platte", "central", "cooperative", "cornell", "phd",
+                      "program", "maui", "clemson", "stoneville", "baton", "rouge",
+                      "ridgetown", "buenos", "ithaca", "são", "cordoba", "usa", "carbondale",
+                      "sur", "river", "system", "johnson", "athens", "city", "usp", "paulo",
+                      "pelotas", "aires", "winfield", "llc", "são", "kingdom", "pnw",
+                      "lexington", "eastern", "mornings", "brookings", "southern", "federal",
+                      "abstracts",
+                      "scottsbluff", "ontario", "manitoba", "thorntown", "lexiton",
+                      "newport", "macomb", "penn", "institute", "islands", "summit",
+                      "shoreview", "ndsu", "collins", "smithville", "europe", "antonio",
+                      "winnipeg", "saint", "fmc", "brookston", "southeastern", "protection",
+                      	"agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
+                   "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
+                   "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
+                   "wakefield", "wayne", "wetherford", "professor", "proceedings", "vol",
+                   "valent","society", "starkville", "department", "sheridan", "viçosa",
+                   "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
+                   "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
+                   "symposium", "volcano", "colfax", "greeley", "boulder", "seffner", "des",
+                   "moines", "amvac", "lees", "crawley", "kyoto", "manoa", "bonham", "posters",
+                   "langley", "waipahu", "salinas", "pontotoc", "richelieu", "galena",
+                   "beebe", "calgary", "bogor", "jean", "hampshire", "trinity", "triangle",
+                   "york", "monticello", "bogotá", "calgary", "albion", "alegre", "arabia",
+                   "saudi", "balm", "bay", "brooks", "bury", "committee", "csic", "daniel",
+                   "dow", "edmonton", "edmunds", "edwardsville", "eloy", "esalq","goldsboro",
+                   "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
+                   "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
+                   "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
+                   "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                   "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
+                   "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
+                   "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
+                   "harpenden", "rothamsted", "wagga", "county", "hawaiian", "belgrade",
+                   "national", "pacific", "adams", "bayer", "dupont", "dow", "johnston",
+                   "layfette", "queensland", "gatton", "rochelle", "linconln")
+```
+
+```{r}
+stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
+                      stopwords_en, stop_wssaprogram_words)
+```
+
+```{r}
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+```
+
+
+
+
+```{r}
+abstract_clean01 <- abstract_clean %>% 
+  filter(year == "2001")
+
+abstract_source <- VectorSource(abstract_clean01$words)
+abstract_corpus01 <- VCorpus(abstract_source)
+ 
+abstract_corpus01 <- clean_corpus(abstract_corpus01)
+
+abstract_dtm01 <- TermDocumentMatrix(abstract_corpus01)
+abstract_matrix01 <- as.matrix(abstract_dtm01)
+abstract_v01 <- sort(rowSums(abstract_matrix01), decreasing=TRUE)
+abstract_01 <- data.frame(word = names(abstract_v01),freq=abstract_v01)
+abstract_01$word <- gsub("twofourd" , "2,4-D" , abstract_01$word)
+abstract_01 <- abstract_01 %>%  mutate(year = 2001)
+```
+
+
+```{r}
+abstract_01 %>% 
+  filter(freq >= 10) %>% 
+  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
+  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
+  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
+  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
+  theme(axis.title = element_text(size=15),
+        axis.text = element_text(size=13)) 
+```
+
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_01$word, freq = abstract_01$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+```{r}
+abstract_clean02 <- abstract_clean %>% 
+  filter(year == "2002")
+
+abstract_source02 <- VectorSource(abstract_clean02$words) 
+abstract_corpus02 <- VCorpus(abstract_source02) 
+ 
+abstract_corpus02 <- clean_corpus(abstract_corpus02)
+
+abstract_dtm02 <- TermDocumentMatrix(abstract_corpus02)
+abstract_matrix02 <- as.matrix(abstract_dtm02)
+abstract_v02 <- sort(rowSums(abstract_matrix02), decreasing=TRUE)
+abstract_02 <- data.frame(word = names(abstract_v02),freq=abstract_v02)
+abstract_02$word <- gsub("twofourd" , "2,4-D" , abstract_02$word)
+abstract_02 <- abstract_02 %>%  mutate(year = 2002)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_02$word, freq = abstract_02$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+```{r}
+abstract_clean03 <- abstract_clean %>% 
+  filter(year == "2003")
+
+abstract_source03 <- VectorSource(abstract_clean03$words) 
+abstract_corpus03 <- VCorpus(abstract_source03) 
+ 
+abstract_corpus03 <- clean_corpus(abstract_corpus03)
+
+abstract_dtm03 <- TermDocumentMatrix(abstract_corpus03)
+abstract_matrix03 <- as.matrix(abstract_dtm03)
+abstract_v03 <- sort(rowSums(abstract_matrix03), decreasing=TRUE)
+abstract_03 <- data.frame(word = names(abstract_v03),freq=abstract_v03)
+abstract_03$word <- gsub("twofourd" , "2,4-D" , abstract_03$word)
+abstract_03 <- abstract_03 %>%  mutate(year = 2003)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_03$word, freq = abstract_03$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+```{r}
+abstract_clean04 <- abstract_clean %>% 
+  filter(year == "2004")
+
+abstract_source04 <- VectorSource(abstract_clean04$words) 
+abstract_corpus04 <- VCorpus(abstract_source04) 
+ 
+abstract_corpus04 <- clean_corpus(abstract_corpus04)
+
+abstract_dtm04 <- TermDocumentMatrix(abstract_corpus04)
+abstract_matrix04 <- as.matrix(abstract_dtm04)
+abstract_v04 <- sort(rowSums(abstract_matrix04), decreasing=TRUE)
+abstract_04 <- data.frame(word = names(abstract_v04),freq=abstract_v04)
+abstract_04$word <- gsub("twofourd" , "2,4-D" , abstract_04$word)
+abstract_04 <- abstract_04 %>%  mutate(year = 2004)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_04$word, freq = abstract_04$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract_clean05 <- abstract_clean %>% 
+  filter(year == "2005")
+
+abstract_source05 <- VectorSource(abstract_clean05$words) 
+abstract_corpus05 <- VCorpus(abstract_source05) 
+ 
+abstract_corpus05 <- clean_corpus(abstract_corpus05)
+
+abstract_dtm05 <- TermDocumentMatrix(abstract_corpus05)
+abstract_matrix05 <- as.matrix(abstract_dtm05)
+abstract_v05 <- sort(rowSums(abstract_matrix05), decreasing=TRUE)
+abstract_05 <- data.frame(word = names(abstract_v05),freq=abstract_v05)
+abstract_05$word <- gsub("twofourd" , "2,4-D" , abstract_05$word)
+abstract_05 <- abstract_05 %>%  mutate(year = 2005)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_05$word, freq = abstract_05$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+```{r}
+abstract_clean06 <- abstract_clean %>% 
+  filter(year == "2006")
+
+abstract_source06 <- VectorSource(abstract_clean06$words) 
+abstract_corpus06 <- VCorpus(abstract_source06) 
+ 
+abstract_corpus06 <- clean_corpus(abstract_corpus06)
+
+abstract_dtm06 <- TermDocumentMatrix(abstract_corpus06)
+abstract_matrix06 <- as.matrix(abstract_dtm06)
+abstract_v06 <- sort(rowSums(abstract_matrix06), decreasing=TRUE)
+abstract_06 <- data.frame(word = names(abstract_v06),freq=abstract_v06)
+abstract_06$word <- gsub("twofourd" , "2,4-D" , abstract_06$word)
+abstract_06 <- abstract_06 %>%  mutate(year = 2006)
+```
+
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_06$word, freq = abstract_06$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+```{r}
+abstract_clean07 <- abstract_clean %>% 
+  filter(year == "2007")
+
+abstract_source07 <- VectorSource(abstract_clean07$words) 
+abstract_corpus07 <- VCorpus(abstract_source07) 
+ 
+abstract_corpus07 <- clean_corpus(abstract_corpus07)
+
+abstract_dtm07 <- TermDocumentMatrix(abstract_corpus07)
+abstract_matrix07 <- as.matrix(abstract_dtm07)
+abstract_v07 <- sort(rowSums(abstract_matrix07), decreasing=TRUE)
+abstract_07 <- data.frame(word = names(abstract_v07),freq=abstract_v07)
+abstract_07$word <- gsub("twofourd" , "2,4-D" , abstract_07$word)
+abstract_07 <- abstract_07 %>%  mutate(year = 2007)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_07$word, freq = abstract_07$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract_clean08 <- abstract_clean %>% 
+  filter(year == "2008")
+
+title_source <- VectorSource(abstract_clean08$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_08 <- data.frame(word = names(title_v),freq=title_v)
+abstract_08$word <- gsub("twofourd" , "2,4-D" , abstract_08$word)
+abstract_08 <- abstract_08 %>%  mutate(year = 2008)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_08$word, freq = abstract_08$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract_clean09 <- abstract_clean %>% 
+  filter(year == "2009")
+
+title_source <- VectorSource(abstract_clean09$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_09 <- data.frame(word = names(title_v),freq=title_v)
+abstract_09$word <- gsub("twofourd" , "2,4-D" , abstract_09$word)
+abstract_09 <- abstract_09 %>%  mutate(year = 2009)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_09$word, freq = abstract_09$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract_clean10 <- abstract_clean %>% 
+  filter(year == "2010")
+
+title_source <- VectorSource(abstract_clean10$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_10 <- data.frame(word = names(title_v),freq=title_v)
+abstract_10$word <- gsub("twofourd" , "2,4-D" , abstract_10$word)
+abstract_10 <- abstract_10 %>%  mutate(year = 2010)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_10$word, freq = abstract_10$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+
+```{r}
+abstract_clean11 <- abstract_clean %>% 
+  filter(year == "2011")
+
+title_source <- VectorSource(abstract_clean11$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_11 <- data.frame(word = names(title_v),freq=title_v)
+abstract_11$word <- gsub("twofourd" , "2,4-D" , abstract_11$word)
+abstract_11 <- abstract_01 %>%  mutate(year = 2011)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_11$word, freq = abstract_11$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract_clean12 <- abstract_clean %>% 
+  filter(year == "2012")
+
+title_source <- VectorSource(abstract_clean12$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_12 <- data.frame(word = names(title_v),freq=title_v)
+abstract_12$word <- gsub("twofourd" , "2,4-D" , abstract_12$word)
+abstract_12 <- abstract_12 %>%  mutate(year = 2012)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_12$word, freq = abstract_12$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+```{r}
+abstract_clean13 <- abstract_clean %>% 
+  filter(year == "2013")
+
+title_source <- VectorSource(abstract_clean13$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_13 <- data.frame(word = names(title_v),freq=title_v)
+abstract_13$word <- gsub("twofourd" , "2,4-D" , abstract_13$word)
+abstract_13 <- abstract_13 %>%  mutate(year = 2013)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1334)
+wordcloud(words = abstract_13$word, freq = abstract_13$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+
+
+```{r}
+abstract_clean14 <- abstract_clean %>% 
+  filter(year == "2014")
+
+title_source <- VectorSource(abstract_clean14$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_14 <- data.frame(word = names(title_v),freq=title_v)
+abstract_14$word <- gsub("twofourd" , "2,4-D" , abstract_14$word)
+abstract_14 <- abstract_14 %>%  mutate(year = 2014)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_14$word, freq = abstract_14$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+```{r}
+abstract_clean15 <- abstract_clean %>% 
+  filter(year == "2015")
+
+title_source <- VectorSource(abstract_clean15$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_15 <- data.frame(word = names(title_v),freq=title_v)
+abstract_15$word <- gsub("twofourd" , "2,4-D" , abstract_15$word)
+abstract_15 <- abstract_15 %>%  mutate(year = 2015)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_15$word, freq = abstract_15$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract_clean16 <- abstract_clean %>% 
+  filter(year == "2016")
+
+title_source <- VectorSource(abstract_clean16$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_16 <- data.frame(word = names(title_v),freq=title_v)
+abstract_16$word <- gsub("twofourd" , "2,4-D" , abstract_16$word)
+abstract_16 <- abstract_16 %>%  mutate(year = 2016)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_16$word, freq = abstract_16$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract_clean17 <- abstract_clean %>% 
+  filter(year == "2017")
+
+title_source <- VectorSource(abstract_clean17$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_17 <- data.frame(word = names(title_v),freq=title_v)
+abstract_17$word <- gsub("twofourd" , "2,4-D" , abstract_17$word)
+abstract_17 <- abstract_17 %>%  mutate(year = 2017)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_17$word, freq = abstract_17$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract_clean18 <- abstract_clean %>% 
+  filter(year == "2018")
+
+title_source <- VectorSource(abstract_clean18$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_18 <- data.frame(word = names(title_v),freq=title_v)
+abstract_18$word <- gsub("twofourd" , "2,4-D" , abstract_18$word)
+abstract_18 <- abstract_18 %>%  mutate(year = 2018)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_18$word, freq = abstract_18$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract_clean19 <- abstract_clean %>% 
+  filter(year == "2019")
+
+title_source <- VectorSource(abstract_clean19$words)
+title_corpus <- VCorpus(title_source)
+
+# this code section will take long (~ min) to run. 
+clean_corpus <- function(corpus){
+  corpus <- tm_map(corpus, removePunctuation) # remove punctuation
+  corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
+  corpus <- tm_map(corpus, removeNumbers) # remove numbers
+  corpus <- tm_map(corpus, removeWords, stopwords_titles) # remove stop words
+  corpus
+}
+
+title_corpus <- clean_corpus(title_corpus)
+
+title_dtm19 <- TermDocumentMatrix(title_corpus)
+title_matrix <- as.matrix(title_dtm19)
+title_v <- sort(rowSums(title_matrix), decreasing=TRUE)
+abstract_19 <- data.frame(word = names(title_v),freq=title_v)
+abstract_19$word <- gsub("twofourd" , "2,4-D" , abstract_19$word)
+abstract_19 <- abstract_19 %>%  mutate(year = 2019)
+```
+
+```{r}
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = abstract_19$word, freq = abstract_19$freq, min.freq=2, scale=c(4,.1),
+           random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+```{r}
+abstract <- rbind(abstract_01, abstract_02, abstract_03, abstract_04, abstract_05, abstract_06, abstract_07, abstract_08, abstract_09, abstract_10, abstract_11, abstract_12, abstract_13, abstract_14, abstract_15, abstract_16, abstract_17, abstract_18, abstract_19)
+
+glimpse(abstract)
+```
+
+```{r}
+abstract %>% 
+  filter(word == "palmer" | word=="waterhemp" | word=="resistant" | word=="resistance") %>% 
+  ggplot(aes(x=year, y=freq, color=word)) + theme_bw() +
+  geom_point() + geom_line() + ylim(0,400)
+```
+
+
+
+
+
