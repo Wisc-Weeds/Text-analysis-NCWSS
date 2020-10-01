@@ -1,0 +1,65 @@
+---
+title: "Text Mining"
+author: "Maxwel Coura Oliveira"
+date: "5/19/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(readr)
+library(dplyr)
+library(rvest)
+library(tidyverse)
+library(data.table)
+library(xml2)
+library(pdftools)
+library(tm)
+library(ggplot2)
+library(igraph)
+library(topicmodels)
+library(wordcloud)
+library(stringr)
+library(tidytext)
+```
+
+# Leitura dos documentos
+
+```{r}
+url_base <- "http://ncwss.org/publications/"
+
+
+urls <- url_base %>%
+    read_html() %>%
+    html_nodes(xpath = "//a[@href]") %>%
+    html_attr(name = "href")
+
+urls
+
+hrefs = urls[urls %like% ".pdf"]
+
+hrefs
+```
+
+# Lista com o texto - 2007 Gene Flow Symposium e 2010 a 2017
+
+```{r}
+ncwss_GF_2010_2017 <- lapply(hrefs, pdf_text)
+```
+
+
+
+
+
+
+
+
+
+
+
+

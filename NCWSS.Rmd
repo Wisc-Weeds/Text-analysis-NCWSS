@@ -1010,7 +1010,7 @@ wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(5,.1)
 # 2006
 
 ```{r}
-pdf_06 <- pdf_text("nc2006.pdf") %>% 
+pdf_06 <- pdf_text("docs/nc2006.pdf") %>% 
   strsplit(split = "\n")
 ```
 
@@ -1598,6 +1598,7 @@ stopwords_titles <- c(stopwords_cities, stopwords_state, stopwords_countries, st
 title_source <- VectorSource(title_tokens$words)
 title_corpus <- VCorpus(title_source)
 ```
+
 
 
 

@@ -1,0 +1,189 @@
+---
+title: "Sarah"
+author: "Maxwel Coura Oliveira"
+date: "5/19/2019"
+output: pdf_document
+---
+
+```{r}
+library(readr)
+library(dplyr)
+library(rvest)
+library(tidyverse)
+library(data.table)
+library(xml2)
+library(pdftools)
+library(tm)
+library(glue)
+library(pipeR)
+```
+
+```{r}
+url_base <- "http://ncwss.org/publications/"
+
+
+urls <- url_base %>%
+    read_html() %>%
+    html_nodes(xpath = "//a[@href]") %>%
+    html_attr(name = "href")
+
+urls
+```
+
+
+```{r}
+hrefs = urls[urls %like% ".pdf"]
+
+hrefs
+```
+
+```{r}
+dfs <- hrefs
+dfs <- gsub("https://ncwss.org/wp-content/uploads/", "", dfs)
+dfs <- gsub("http://ncwss.org/wp-content/uploads/", "", dfs)
+dfs <- gsub("2015/03/", "", dfs)
+
+dfs
+
+for (i in 1:length(hrefs)){
+  download.file(hrefs[i], dfs[i])
+}
+
+
+```
+
+
+# 2009
+
+```{r}
+urls
+
+hrefs = urls[urls %like% "proceed/"]
+hrefs
+
+url_base <- "http://ncwss.org/proceed/2009/grid.html"
+
+urls_2009 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+urls_2009
+
+hrefs_2009 = urls_2009[urls_2009 %like% ".pdf"]
+df_2009 = hrefs_2009
+
+df_2009
+
+hrefs_2009 <- paste0("http://ncwss.org/proceed/2009/", hrefs_2009)
+df_2009 <- gsub("Abstracts/", "2009_", df_2009)
+
+hrefs_2009
+
+for (i in 1:length(hrefs_2009)){
+  download.file(hrefs_2009[i], df_2009[i])
+}
+```
+
+#2008
+
+```{r}
+url_base <- "http://ncwss.org/proceed/2008/grid.html"
+
+urls_2008 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+hrefs_2008 = urls_2008[urls_2008 %like% ".pdf"]
+df_2008 = hrefs_2008
+
+
+
+hrefs_2008 <- paste0("http://ncwss.org/proceed/2008/", hrefs_2008)
+df_2008 <- gsub("abstracts/", "2008_", df_2008)
+
+
+for (i in 1:length(hrefs_2008)){
+  download.file(hrefs_2008[i], df_2008[i])
+}
+```
+
+# 2007
+
+```{r}
+url_base <- "http://ncwss.org/proceed/2007/grid.htm"
+
+urls_2007 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+hrefs_2007 = urls_2007[urls_2007 %like% ".pdf"]
+df_2007 = hrefs_2007
+
+hrefs_2007 <- paste0("http://ncwss.org/proceed/2007/", hrefs_2007)
+df_2007 <- gsub("Abstracts/", "2007_", df_2007)
+
+
+
+for (i in 1:length(hrefs_2007)){
+  download.file(hrefs_2007[i], df_2007[i])
+}
+```
+
+
+
+```{r}
+url_base <- "http://ncwss.org/proceed/2006/grid.html"
+
+urls_2006 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+
+
+hrefs_2006 = urls_2006[urls_2006 %like% ".pdf"]
+df_2006 = hrefs_2006
+
+
+hrefs_2006 <- paste0("http://ncwss.org/proceed/2006/", hrefs_2006)
+df_2006 <- gsub("abstracts/", "2006_", df_2006)
+
+for (i in 1:length(hrefs_2006)){
+  download.file(hrefs_2006[i], df_2006[i])
+}
+```
+
+#2005
+
+
+```{r}
+
+url_base <- "http://ncwss.org/proceed/2005/proc05/abstracts/grid05.htm"
+
+urls_2005 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+
+hrefs_2005 = urls_2005[urls_2005 %like% ".pdf"]
+df_2005 = hrefs_2005
+
+
+hrefs_2005 <- paste0("http://ncwss.org/proceed/2005/proc05/abstracts/", hrefs_2005)
+df_2005 <- paste0("2005_", df_2005)
+
+for (i in 1:length(hrefs_2005)){
+  download.file(hrefs_2005[i], df_2005[i])
+}
+```
+
+#2004
+
+```{r}
+
+```
+
