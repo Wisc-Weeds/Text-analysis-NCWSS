@@ -6,6 +6,7 @@ output: pdf_document
 ---
 
 ```{r include=FALSE}
+library(ggwordcloud)
 library(textreadr)
 library(readr)
 library(rvest)
@@ -4219,7 +4220,13 @@ data <- Data %>%
 
 
 
-```{r}
-ggplot(Data, aes(x=year, y=freq, color=word)) + geom_point() 
+```{r warning = FALSE}
+Data %>% 
+    ggplot(aes(y=freq, label = word, size = word, color = word)) + 
+      #geom_bar(stat ="identity", show.legend = FALSE) + 
+      geom_text_wordcloud() +
+#      scale_size_area(max_size = 20) +
+      facet_wrap(~year) +
+      ggsave("cloud.png", height=12, width = 12)
 ```
 
