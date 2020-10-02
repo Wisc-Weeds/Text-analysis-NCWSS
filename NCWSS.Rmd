@@ -3973,7 +3973,7 @@ wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=1, scale=c(4,.1)
 # 2019
 
 ```{r}
-pdf_18 <- pdf_text("nc2019.pdf") %>% 
+pdf_19 <- pdf_text("nc2019.pdf") %>% 
   strsplit(split = "\n")
 ```
 
@@ -4184,9 +4184,19 @@ title_dt %>%
   theme(axis.title = element_text(size=15),
         axis.text = element_text(size=13)) 
 ```
+```{r}
+words19 <- title_dt  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1)  %>% 
+  mutate(year = "2019") 
+```
 
 
-```{r} 
+
+```{r message = FALSE, warning=FALSE} 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -4200,14 +4210,16 @@ wordcloud(words = title_dt$word, freq = title_dt$freq, min.freq=2, scale=c(4,.1)
 
 
 ```{r}
-Data <- bind_rows(words02, words03, words04, words05, words06, words08, words09, words10, words11, words12, words13, words14, words15, words16, words17, words18)
+Data <- bind_rows(words02, words03, words04, words05, words06, words08, words09, words10, words11, words12, words13, words14, words15, words16, words17, words18, words19)
 Data$year <- as.numeric(Data$year)
 data <- Data %>% 
   filter( word == "palmer" | word == "glyphosate" |  word == "dicamba" | word == "resistant")
 ```
 
+
+
+
 ```{r}
-ggplot(data, aes(x=year, y=freq, color=word)) + geom_line() + geom_point() +
-  theme_bw() + ggsave("weeds.png")
+ggplot(Data, aes(x=year, y=freq, color=word)) + geom_point() 
 ```
 
