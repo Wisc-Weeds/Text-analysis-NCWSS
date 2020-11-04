@@ -28,11 +28,6 @@ library(rcorpora)
 ```{r}
 #Load data 2002
 
-
-
-
-#Load data 2002
-
 co2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/cereals2.htm") %>% 
   html_nodes(xpath = "//p[.]") %>%
   html_text() 
