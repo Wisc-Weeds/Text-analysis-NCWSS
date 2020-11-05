@@ -79,7 +79,7 @@ title_tokens_01 <- titledm_01 %>%
 
 ```{r include=FALSE}
 authors_01 <- read_html("http://ncwss.org/proceed/2001/indexes/author.htm") %>% 
-  html_nodes(xpath = "/html/body/p[.]") %>%
+  html_nodes(xpath = "/html") %>%
   html_text() 
 authors_01 <- c(authors_01)
 authors_01 <- data_frame(authors_01)
@@ -130,10 +130,6 @@ words01 <- title_dt_01  %>%
   mutate(year = "2001")
 ```
 
-```{r}
-words01 %>% 
-  filter(word == "weed")
-```
 
 
 ```{r eval=FALSE} 
@@ -228,6 +224,7 @@ words02 <- title_dt_02  %>%
   mutate_at(4, round, 1) %>% 
   mutate(year = "2002")
 ```
+
 
 
 
@@ -2329,9 +2326,9 @@ wordcloud(words = title_dt_19$word, freq = title_dt_19$freq, min.freq=2, scale=c
 
 ```{r}
 Data <- bind_rows(words01, words02, words03, words04, words05, words06, words07, words08, words09, words10, words11, words12, words13, words14, words15, words16, words17, words18, words19)
-Data$year <- as.numeric(Data$year)
-data <- Data %>% 
-  filter( word == "palmer" | word == "glyphosate" |  word == "dicamba" | word == "resistant")
+#Data$year <- as.numeric(Data$year)
+#data <- Data %>% 
+#  filter( word == "palmer" | word == "glyphosate" |  word == "dicamba" | word == "resistant")
 ```
 
 
@@ -2367,8 +2364,8 @@ freq_by_rank <- Data %>%
 
 ```{r}
 freq_by_rank <- freq_by_rank %>% 
-  mutate(highlight = ifelse(word %in% c("control", "glyphosate", "dicamba", "2,4-D", "resistance",
-                                            "horseweed"), TRUE, FALSE),
+  mutate(highlight = ifelse(word %in% c("palmer", "waterhemp", "dicamba", "2,4-D", "resistant",
+                                            "drift"), TRUE, FALSE),
        variable_col = if_else(highlight == TRUE, word, "NA"))
 ```
 
@@ -2392,10 +2389,10 @@ theme_style <- theme(text = element_text(family = font_family),
                   panel.grid.major.x = element_blank(),
                   panel.grid.minor.x = element_blank(),
                   plot.margin = unit(c(2, 2, 2, 2), "cm"),
-                  axis.title.y = element_text(face = 'bold', size = 35, colour = text_colour),
+                  axis.title.y = element_text(face = 'bold', size = 40, colour = text_colour),
                   axis.title.x = element_blank(),
                   axis.text.x = element_text(size = 35, colour= axis_colour, vjust = 14),
-                  axis.text.y = element_text(size = 35, colour = text_colour),
+                  axis.text.y = element_text(size = 25, colour = text_colour),
                   axis.ticks = element_blank(),
                   axis.line = element_blank(),
                   legend.text = element_text(size = 20, colour= text_colour),
@@ -2405,37 +2402,40 @@ theme_style <- theme(text = element_text(family = font_family),
 theme_set(theme_classic() + theme_style)
 
 #Set colour palette
-cols <- c("#FE5F55", "#4281A4", "#48A9A6", "#D4B483", "#E4DFDA", "#39393A", "#C1666B")
+cols <- c("#FE5F55", "#4281A4", "#48A9A6", "#39393A", "#D4B483", "#E4DFDA", "#C1666B")
 ```
-
-                                            
+   
+                                     
+               
 
 
 ```{r}
 #Plot data
-freq_by_rank <- freq_by_rank %>% 
-  filter(rank < 101) 
-ggplot(freq_by_rank, aes(x = year, y = rank, group = word)) +
+freq_by_rank_1 <- freq_by_rank %>% 
+  filter(rank < 101) %>% 
+  mutate(year = as.double(year))
+
+ggplot(freq_by_rank_1, aes(x = year, y = rank, group = word)) +
   geom_line(aes(color = variable_col), size = 2) +
   geom_point(aes(color = variable_col), size = 6) +
   scale_y_reverse(breaks = 100:1) +
   scale_x_continuous(breaks = seq(2001, 2019, 2), limits= c(2000, 2020), 
                      expand = c(.05, .05)) +
-  geom_text(data = freq_by_rank %>%  filter(year == "2001"),
+  geom_text(data = freq_by_rank_1 %>%  filter(year == "2001"),
             aes(label = word, x = 2000.8, color = variable_col),
             hjust = "right",
             fontface = "bold",
-            size = 7) +
-  geom_text(data = freq_by_rank %>%  filter(year == "2019"),
+            size = 10) +
+  geom_text(data = freq_by_rank_1 %>%  filter(year == "2019"),
             aes(label = word, x = 2019.2, color = variable_col),
             hjust = "left",
             fontface = "bold",
-            size = 7) +
+            size = 10) +
   coord_cartesian(ylim = c(101,1)) +
   scale_color_manual(values = cols) +
   #scale_y_reverse(breaks = 1:nrow(NY_kids)) +
-  labs(title = "NCWSS word frequency in the XXI century ",
-       subtitle = "A NCWSS Meeting text analysis of title and abstracts from 2001 through 2019",
+  labs(title = "A NCWSS Meeting text analysis of title and abstracts from 2001 through 2019",
+       subtitle = "", y= "Rank",
        caption = "Vizualisation: @maxwelco | Source: NCWSS")
 
 #Export plot
