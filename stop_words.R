@@ -38,8 +38,6 @@ stopwords_en <- tolower(stopwords_en) # making lowercase
 
 
 
-stop_words <- c("university", "univ", "symposia") 
-
 
 
 stopwords <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords_capitals,
@@ -47,11 +45,8 @@ stopwords <- c(stopwords_cities, stopwords_state, stopwords_countries, stopwords
 stopwords <- data_frame(stopwords)
 #tokerization
 stopwords_tokens <- stopwords %>%
-  unnest_tokens(words, stopwords)
-
-
-
-
+  unnest_tokens(words, stopwords) %>% 
+  filter(words != "palmer")
 
 
 
@@ -59,16 +54,16 @@ stopwords_tokens <- stopwords %>%
 stop_wssaprogram_words <- c("janet", "harrington", "calvin", "don", "thelen", "fitzpatrick",
                             "messersmith", "sharie", "fjell", "kerr", "emerson", "nafziger", 	"vollmer", 
                             "kathie", "colby", "baughman", "jennifer", "sij", "kalmowitz", 
-                            "natalie","crop", "universidad", "universidade", "location",
-                            "william", "dept", "knezevic",
-                            "univ", "ames", "michael", "mark", "dallas", 
+                            "natalie","crop", "location",
+                            "william", "dept", "knezevic", "adjunct", "assistant",
+                            "univ", "ames", "michael", "mark", "dallas", "associate",
                             "david", "manhattan", "urbana", "bernard",
                             "patrick", "marysville", "mike", "dean", "john", 
                             "robert", "bryan", "phillip", "jeffrey",
                             "gary", "eric", "bob", "carol", "ellen", "rob", "fred", 
                             "joanne", "donald", "chris", "lary",
                             "director", "loyd", "hartzler", "sprague", "christy", "kent", 
-                            "masabni", "brian", "olson", 
+                            "masabni", "brian", "olson", "paper", "poster",
                             "brian", "kassim", "khatib", "kurt", "kathleen", "micheal",
                             "agriscience", "usda", "monarchy", "north", "march", "moderator",
                             "extension", "college", "tech", "time", "student", "contest",
@@ -140,7 +135,7 @@ stop_wssaprogram_words <- c("janet", "harrington", "calvin", "don", "thelen", "f
                             "agrosciences", "monsanto", "louis", "campus", "bangkok", "collins",
                             "council", "corporation", "rio", "grande", "harrow", "aac", "aafc",
                             "beach", "aberdeen", "brunswick", "napa", "rutgers", "mills", "falls",
-                            "wakefield", "wayne", 
+                            "wakefield", "wayne", "undergraduate", "graduate", "professor",
                             "valent","society", "starkville", "department", "sheridan", "viçosa",
                             "lonoke", "osmond", "las", "cruces", "makawao", "painter", "lethbridge",
                             "daejeon", "moghu", "bridgestone", "princeton", "lafayette", "hastings",
@@ -154,7 +149,7 @@ stop_wssaprogram_words <- c("janet", "harrington", "calvin", "don", "thelen", "f
                             "hettinger", "iaa", "korea", "lacombe", "jaboticabal", "keenesburg",
                             "marina", "mcminnville", "maringa", "marrone", "morrisville", "monterey",
                             "nufarm", "oak", "ncsu", "nacional", "ottawa", "pendleton", "pat",
-                            "porto", "plc", "stephenville", "steckel", "tokyo", "universitat", "vero",
+                            "porto", "plc", "stephenville", "steckel", "tokyo", "vero",
                             "univ", "wageningen", "wooster", "christi", "corpus", "company", "dryden",
                             "glenn", "nice", "nrcs", "oroville", "susanville", "amworth", "yuba",
                             "hays", "bracknell", "agcenter", "americas", "america", "immokalee", "papers",
@@ -168,7 +163,8 @@ stop_wssaprogram_words <- c("janet", "harrington", "calvin", "don", "thelen", "f
                             "kamienski", "christopher", "romina", "stevan", "terry", "renner",
                             "wolf", "kenneth", "karen", "gerard", "harankhedkar", "golus", "w.donald",
                             "bauman", "czapar", "greg", "dahl", "gednalske", "michaeland", "jan", "joe",
-                            "gerald", "dinicola", "beverly", "durgan", "stoltenberg"
+                            "gerald", "dinicola", "beverly", "scientist", "addendum",
+                            "durgan", "stoltenberg", "annual"
                             )
 
 

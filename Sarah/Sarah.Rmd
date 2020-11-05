@@ -181,9 +181,118 @@ for (i in 1:length(hrefs_2005)){
 }
 ```
 
-#2004
+# 2004
 
 ```{r}
+url_base <- "http://ncwss.org/proceed/2004/proc04/abstracts/04grid.htm"
 
+urls_2004 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+urls_2004
+
+hrefs_2004 = urls_2004[urls_2004 %like% ".pdf"]
+df_2004 = hrefs_2004
+
+df_2004
+
+hrefs_2004 <- paste0("http://ncwss.org/proceed/2004/proc04/abstracts/", hrefs_2004)
+
+hrefs_2004
+
+for (i in 1:length(hrefs_2004)){
+  download.file(hrefs_2004[i], df_2004[i])
+}
 ```
+
+
+# 2003
+
+```{r}
+url_base <- "http://ncwss.org/proceed/2003/Proc03/abstracts/03abstracts.htm"
+
+urls_2003 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+urls_2003
+
+hrefs_2003 = urls_2003[urls_2003 %like% ".pdf"]
+df_2003 = hrefs_2003
+
+df_2003
+hrefs_2003
+
+hrefs_2003 <- gsub("../../", "http://ncwss.org/proceed/2003/", hrefs_2003)
+df_2003 <- gsub("../../2003%20NCWSS%20Proceedings/abstracts/", "", df_2003)
+
+hrefs_2003
+df_2003
+
+for (i in 1:length(hrefs_2003)){
+  download.file(hrefs_2003[i], df_2003[i])
+}
+```
+
+
+# 2002
+
+```{r}
+url_base <- "http://ncwss.org/proceed/2002/Proc2002/abstracts/paperno2.htm"
+
+urls_2002 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+urls_2002
+
+hrefs_2002 = urls_2002[urls_2002 %like% ".pdf"]
+df_2002 = hrefs_2002
+
+df_2002
+
+hrefs_2002 <- paste0("http://ncwss.org/proceed/2002/Proc2002/abstracts/", hrefs_2002)
+
+hrefs_2002
+
+for (i in 1:length(hrefs_2002)){
+  download.file(hrefs_2002[i], df_2002[i])
+}
+```
+
+
+```{r}
+url_base <- "http://ncwss.org/proceed/2001/indexes/paperno.htm"
+
+urls_2001 <- url_base %>%
+  read_html() %>%
+  html_nodes(xpath = "//a[@href]") %>%
+  html_attr(name = "href")
+
+urls_2001
+
+hrefs_2001 = urls_2001[urls_2001 %like% ".pdf"]
+hrefs_2001
+
+df_2001 = hrefs_2001
+
+hrefs_2001 <- gsub("../abstracts/", "http://ncwss.org/proceed/2001/abstracts/", hrefs_2001)
+df_2001 <- gsub("../abstracts/", "", df_2001)
+
+hrefs_2001
+df_2001
+
+for (i in 1:length(hrefs_2001)){
+  download.file(hrefs_2001[i], df_2001[i])
+}
+```
+
+
+
+
+
 

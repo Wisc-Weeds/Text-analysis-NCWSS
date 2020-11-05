@@ -45,66 +45,126 @@ clean_corpus <- function(corpus){
 ```
 
 
-
-#2002
+# 2001
 
 ```{r}
-co2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/cereals2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-cs2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/corn2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-met2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/equipment2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-ext2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/extension2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-for2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/forage2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-phy2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/physiology2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-turf2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/industrial2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-soil2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/soil2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-soy2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/soybeans2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-hort2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/sugarbeets2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-eco2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/ecology2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-app2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/applicsymposium2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-res2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/glysymp2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-shi2002 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/weedshiftsymp2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-
-
-
-nc_2002 <- rbind(co2002, cs2002, met2002, ext2002, for2002, phy2002, soil2002, 
-                 soy2002, turf2002, hort2002, eco2002, app2002, res2002, shi2002)
+pdf_01 <- pdf_text("nc2001.pdf") %>% 
+  strsplit(split = "\n")
 ```
 
+```{r}
+title_01 <- pdf_01[5:211] 
+```
+
+```{r warning=FALSE, include=FALSE}
+titledm_01 <- data.frame() # as data frame
+
+for (i in 1:length(title_01)) {
+  print(i)
+  titlelines <- data.frame(names = title_01[[i]])
+  titledm_01 <- bind_rows(titledm_01, titlelines)
+} 
+```
+
+```{r}
+titledm_01$names <- gsub("2,4-D" , "twofourd" , titledm_01$names)
+```
+
+```{r}
+title_tokens_01 <- titledm_01 %>%
+  unnest_tokens(words, names)
+```
+
+
+
+```{r include=FALSE}
+authors_01 <- read_html("http://ncwss.org/proceed/2001/indexes/author.htm") %>% 
+  html_nodes(xpath = "/html/body/p[.]") %>%
+  html_text() 
+authors_01 <- c(authors_01)
+authors_01 <- data_frame(authors_01)
+#tokerization
+authors_tokens_01 <- authors_01 %>%
+  unnest_tokens(words, authors_01) %>% 
+  filter(words != "weed")
+```
+
+
+
+
+```{r }
+title_tokens_01 <- anti_join(title_tokens_01, stop_wssaprogram_words_tokens, by = "words") 
+title_tokens_01 <- anti_join(title_tokens_01, stopwords_tokens, by = "words") 
+title_tokens_01 <- anti_join(title_tokens_01, authors_tokens_01, by = "words") 
+```
+
+
+
+```{r}
+title_source_01 <- VectorSource(title_tokens_01$words)
+title_corpus_01 <- VCorpus(title_source_01)
+```
+
+```{r}
+title_corpus_01 <- clean_corpus(title_corpus_01)
+```
+
+```{r}
+title_dtm_01 <- TermDocumentMatrix(title_corpus_01)
+title_matrix_01 <- as.matrix(title_dtm_01)
+title_v_01 <- sort(rowSums(title_matrix_01), decreasing=TRUE)
+title_dt_01 <- data.frame(word = names(title_v_01),freq=title_v_01)
+```
+
+```{r}
+title_dt_01$word <- gsub("twofourd" , "2,4-D" , title_dt_01$word)
+```
+
+```{r}
+words01 <- title_dt_01  %>% 
+  select(word, freq) %>% 
+  #group_by(word) %>% 
+  add_tally(freq, name="nn") %>% 
+  mutate(Perc=(freq/nn)*100) %>% 
+  mutate_at(4, round, 1) %>% 
+  mutate(year = "2001")
+```
+
+```{r}
+words01 %>% 
+  filter(word == "weed")
+```
+
+
+```{r eval=FALSE} 
+# need to stop footnotes' word
+
+pal <- brewer.pal(8,"Dark2") #selecting the color palette
+
+set.seed(1234)
+wordcloud(words = title_dt_01$word, freq = title_dt_01$freq, min.freq=1, scale=c(4,.1),
+          random.order=FALSE, rot.per=0.35, colors=pal)
+```
+
+
+
+# 2002
+
+```{r}
+pdf_02 <- pdf_text("nc2002.pdf") %>% 
+  strsplit(split = "\n")
+```
+
+```{r}
+title_02 <- pdf_02[5:211] 
+```
 
 ```{r warning=FALSE, include=FALSE}
 titledm_02 <- data.frame() # as data frame
 
-for (i in 1:length(nc_2002)) {
+for (i in 1:length(title_02)) {
   print(i)
-  titlelines <- data.frame(names = nc_2002[[i]])
+  titlelines <- data.frame(names = title_02[[i]])
   titledm_02 <- bind_rows(titledm_02, titlelines)
 } 
 ```
@@ -120,21 +180,22 @@ title_tokens_02 <- titledm_02 %>%
 
 
 ```{r eval=FALSE, include=FALSE}
-authors <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/author2.htm") %>% 
+authors_02 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/author2.htm") %>% 
   html_nodes(xpath = "/html/body/p[.]") %>%
   html_text() 
-authors <- c(authors)
-authors <- data_frame(authors)
+authors_02 <- c(authors_02)
+authors_02 <- data_frame(authors_02)
 #tokerization
-authors_tokens <- authors %>%
-  unnest_tokens(words, authors)
+authors_tokens_02 <- authors_02 %>%
+  unnest_tokens(words, authors_02) %>% 
+  filter(words != "weed")
 ```
 
 
 ```{r }
 title_tokens_02 <- anti_join(title_tokens_02, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_02 <- anti_join(title_tokens_02, stopwords_tokens, by = "words") 
-title_tokens_02 <- anti_join(title_tokens_02, authors_tokens, by = "words") 
+title_tokens_02 <- anti_join(title_tokens_02, authors_tokens_02, by = "words") 
 ```
 
 
@@ -158,17 +219,6 @@ title_dt_02 <- data.frame(word = names(title_v_02),freq=title_v_02)
 title_dt_02$word <- gsub("twofourd" , "2,4-D" , title_dt_02$word)
 ```
 
-```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_02 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
-
 ```{r}
 words02 <- title_dt_02  %>% 
   select(word, freq) %>% 
@@ -182,14 +232,14 @@ words02 <- title_dt_02  %>%
 
 
 
-```{r} 
+```{r eval=FALSE}  
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
 wordcloud(words = title_dt_02$word, freq = title_dt_02$freq, min.freq=1, scale=c(4,.1),
-           random.order=FALSE, rot.per=0.35, colors=pal)
+          random.order=FALSE, rot.per=0.35, colors=pal)
 ```
 
 
@@ -197,62 +247,23 @@ wordcloud(words = title_dt_02$word, freq = title_dt_02$freq, min.freq=1, scale=c
 
 
 
-
-
-
-
-
-
-
-#2003
+# 2003
 
 ```{r}
-co2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Cereals%20and%20Oilseeds.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-cs2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Corn%20and%20Sorghum.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-met2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Equipment%20and%20Application.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-ext2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Extension.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-for2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Forages%20and%20Range.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-phy2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Herbicide%20Phy.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-soil2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Soil%20and%20Environment.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-soy2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Soybean.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-hort2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/Sugarbeet,%20hort,%20ornamental.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-eco2003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/weed%20ecology.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-sym22003 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/symposia.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
+pdf_03 <- pdf_text("nc2003.pdf") %>% 
+  strsplit(split = "\n")
+```
 
-
-
-nc_2003 <- rbind(co2003, cs2003, met2003, ext2003, for2003, phy2003, soil2003, 
-                 soy2003, hort2003, eco2003, sym22003)
+```{r}
+title_03 <- pdf_03[1:205] 
 ```
 
 ```{r warning=FALSE, include=FALSE}
 titledm_03 <- data.frame() # as data frame
 
-for (i in 1:length(nc_2003)) {
+for (i in 1:length(title_03)) {
   print(i)
-  titlelines <- data.frame(names = nc_2003[[i]])
+  titlelines <- data.frame(names = title_03[[i]])
   titledm_03 <- bind_rows(titledm_03, titlelines)
 } 
 ```
@@ -283,7 +294,7 @@ authors_tokens_03 <- authors_03 %>%
 ```{r }
 title_tokens_03 <- anti_join(title_tokens_03, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_03 <- anti_join(title_tokens_03, stopwords_tokens, by = "words") 
-title_tokens_03 <- anti_join(title_tokens_03, authors_tokens, by = "words") 
+title_tokens_03 <- anti_join(title_tokens_03, authors_tokens_03, by = "words") 
 ```
 
 
@@ -310,16 +321,6 @@ title_dt_03 <- data.frame(word = names(title_v_03),freq=title_v_03)
 title_dt_03$word <- gsub("twofourd" , "2,4-D" , title_dt_03$word)
 ```
 
-```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_03 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
 
 ```{r}
 words03 <- title_dt_03  %>% 
@@ -332,79 +333,40 @@ words03 <- title_dt_03  %>%
 ```
 
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, eval=FALSE} 
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
 wordcloud(words = title_dt_03$word, freq = title_dt_03$freq, min.freq=1, scale=c(4,.1),
-           random.order=FALSE, rot.per=0.35, colors=pal)
+          random.order=FALSE, rot.per=0.35, colors=pal)
 ```
+
+
+
+
 
 
 
 # 2004
 
+```{r}
+pdf_04 <- pdf_text("nc2004.pdf") %>% 
+  strsplit(split = "\n")
+```
 
 ```{r}
-co2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/cereals2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-cs2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/corn2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-met2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/equipment2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-ext2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/extension2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-for2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/forage2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-phy2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/physiology2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-tur2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/industrial2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-inv2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/invasives2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-soy2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/soybean2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-hort2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/sugarbeets2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-eco2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/ecology2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-tur22004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/herbtolturf2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-iv22004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/invasives2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-seed2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/seedbankdynam2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-sind2004 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/seedindustry2.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-
-
-nc_2004 <- rbind(co2004, cs2004, met2004, ext2004, for2004, phy2004, tur2004, inv2004, 
-                 soy2004, hort2004, eco2004, tur22004, iv22004, seed2004, sind2004)
+title_04 <- pdf_04[3:188] 
 ```
+
 
 ```{r warning=FALSE, include=FALSE}
 titledm_04 <- data.frame() # as data frame
 
-for (i in 1:length(nc_2004)) {
+for (i in 1:length(title_04)) {
   print(i)
-  titlelines <- data.frame(names = nc_2004[[i]])
+  titlelines <- data.frame(names = title_04[[i]])
   titledm_04 <- bind_rows(titledm_04, titlelines)
 } 
 ```
@@ -435,7 +397,7 @@ authors_tokens_04 <- authors_04 %>%
 ```{r }
 title_tokens_04 <- anti_join(title_tokens_04, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_04 <- anti_join(title_tokens_04, stopwords_tokens, by = "words") 
-title_tokens_04 <- anti_join(title_tokens_04, authors_tokens, by = "words") 
+title_tokens_04 <- anti_join(title_tokens_04, authors_tokens_04, by = "words") 
 ```
 
 
@@ -465,16 +427,6 @@ title_dt_04$word <- gsub("twofourd" , "2,4-D" , title_dt_04$word)
 ```
 
 
-```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_04 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
 
 ```{r}
 words04 <- title_dt_04  %>% 
@@ -487,77 +439,43 @@ words04 <- title_dt_04  %>%
 ```
 
 
-```{r warning = FALSE} 
+```{r warning = FALSE, eval=FALSE} 
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
 wordcloud(words = title_dt_04$word, freq = title_dt_04$freq, min.freq=1, scale=c(4,.1),
-           random.order=FALSE, rot.per=0.35, colors=pal)
+          random.order=FALSE, rot.per=0.35, colors=pal)
 ```
+
+
+
+
+
+
 
 
 
 
 # 2005
 
-
-
+```{r}
+pdf_05 <- pdf_text("nc2005.pdf") %>% 
+  strsplit(split = "\n")
+```
 
 ```{r}
-co2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/cereals.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-cs2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/corn.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-met2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/equipment.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-ext2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/extension.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-for2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/forage.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-phy2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/physiology.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-tur2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/industrial.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-inv2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/invasive.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-soil2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/soil.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-soy2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/soybean.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-hort2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/sugarbeets.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-eco2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/ecolbiol.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-man2005 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/ecolmanage.htm") %>% 
-  html_nodes(xpath = "//p[.]") %>%
-  html_text() 
-
-
-
-nc_2005 <- rbind(co2005, cs2005, met2005, ext2005, for2005, phy2005, tur2005, inv2005, soil2005,
-                 soy2005, hort2005, eco2005, man2005)
+title_05 <- pdf_05[1:229] 
 ```
+
 
 ```{r warning=FALSE, include=FALSE}
 titledm_05 <- data.frame() # as data frame
 
-for (i in 1:length(nc_2005)) {
+for (i in 1:length(title_05)) {
   print(i)
-  titlelines <- data.frame(names = nc_2005[[i]])
+  titlelines <- data.frame(names = title_05[[i]])
   titledm_05 <- bind_rows(titledm_05, titlelines)
 } 
 ```
@@ -587,7 +505,7 @@ authors_tokens_05 <- authors_05 %>%
 ```{r }
 title_tokens_05 <- anti_join(title_tokens_05, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_05 <- anti_join(title_tokens_05, stopwords_tokens, by = "words") 
-title_tokens_05 <- anti_join(title_tokens_05, authors_tokens, by = "words") 
+title_tokens_05 <- anti_join(title_tokens_05, authors_tokens_05, by = "words") 
 ```
 
 
@@ -617,17 +535,6 @@ title_dt_05$word <- gsub("twofourd" , "2,4-D" , title_dt_05$word)
 ```
 
 
-```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_05 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
-
 ```{r}
 words05 <- title_dt_05  %>% 
   select(word, freq) %>% 
@@ -639,39 +546,38 @@ words05 <- title_dt_05  %>%
 ```
 
 
-```{r} 
+```{r eval=FALSE} 
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
 wordcloud(words = title_dt_05$word, freq = title_dt_05$freq, min.freq=1, scale=c(5,.1),
-           random.order=FALSE, rot.per=0.35, colors=pal)
+          random.order=FALSE, rot.per=0.35, colors=pal)
 ```
-
-
 
 
 
 
 # 2006
 
+
 ```{r}
-pdf_06 <- pdf_text("docs/nc2006.pdf") %>% 
+pdf_06 <- pdf_text("nc2006.pdf") %>% 
   strsplit(split = "\n")
 ```
 
 ```{r}
-title <- pdf_06[1:20] 
+title_06 <- pdf_06[1:216] 
 ```
 
 
 ```{r warning=FALSE, include=FALSE}
 titledm_06 <- data.frame() # as data frame
 
-for (i in 1:length(title)) {
+for (i in 1:length(title_06)) {
   print(i)
-  titlelines_06 <- data.frame(names = title[[i]])
+  titlelines_06 <- data.frame(names = title_06[[i]])
   titledm_06 <- bind_rows(titledm_06, titlelines_06)
 } 
 ```
@@ -692,7 +598,7 @@ authors_06 <- pdf_06[21:28]
 
 authorsdm_06 <- data.frame()
 
-for (i in 1:length(authors)) {
+for (i in 1:length(authors_06)) {
   print(i)
   authorslines_06 <- data.frame(names = authors_06[[i]])
   authorsdm_06 <- bind_rows(authorsdm_06, authorslines_06)
@@ -714,7 +620,7 @@ title_tokens_06 <- anti_join(title_tokens_06, authors_tokens_06, by = "words")
 ```{r include=FALSE}
 rm_author_06 <- c(1:12) 
 rm_authors_number_06 <-c()
-for (i in 1:length(rm_author)) {
+for (i in 1:length(rm_author_06)) {
   print(i)
   rm_authors_numbers_06 <- c(paste0(authors_tokens_06$words, i))
   rm_authors_number_06 <- c(rm_authors_number_06, rm_authors_numbers_06)
@@ -767,16 +673,7 @@ title_dt_06$word <- gsub("twofourd" , "2,4-D" , title_dt_06$word)
 ```
 
 
-```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_06 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
+
 
 ```{r}
 words06 <- title_dt_06  %>% 
@@ -789,14 +686,14 @@ words06 <- title_dt_06  %>%
 ```
 
 
-```{r} 
+```{r  eval=FALSE}  
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
 wordcloud(words = title_dt_06$word, freq = title_dt_06$freq, min.freq=1, scale=c(4,.1),
-           random.order=FALSE, rot.per=0.35, colors=pal)
+          random.order=FALSE, rot.per=0.35, colors=pal)
 ```
 
 
@@ -804,48 +701,26 @@ wordcloud(words = title_dt_06$word, freq = title_dt_06$freq, min.freq=1, scale=c
 
 # 2007
 
-
-
-
+```{r}
+pdf_07 <- pdf_text("nc2007.pdf") %>% 
+  strsplit(split = "\n")
+```
 
 ```{r}
-ag2007 <- read_html("http://ncwss.org/proceed/2007/agronomic.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-ex2007 <- read_html("http://ncwss.org/proceed/2007/extension.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-phy2007 <- read_html("http://ncwss.org/proceed/2007/physiology.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-hort2007 <- read_html("http://ncwss.org/proceed/2007/horticulture.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-inv2007 <- read_html("http://ncwss.org/proceed/2007/invasiveweeds.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-bem2007 <- read_html("http://ncwss.org/proceed/2007/biology.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-cm2007 <- read_html("http://ncwss.org/proceed/2007/communication.htm") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-gf2007 <- read_html("http://ncwss.org/proceed/2007/geneflow.htm") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-
-nc_2007 <- rbind(ag2007, ex2007, phy2007, hort2007, inv2007, bem2007,  cm2007, gf2007)
+title_07 <- pdf_07[6:248] 
 ```
+
 
 ```{r warning=FALSE, include=FALSE}
 titledm_07 <- data.frame() # as data frame
 
-for (i in 1:length(nc_2007)) {
+for (i in 1:length(title_07)) {
   print(i)
-  titlelines_07 <- data.frame(names = nc_2007[[i]])
+  titlelines_07 <- data.frame(names = title_07[[i]])
   titledm_07 <- bind_rows(titledm_07, titlelines_07)
 } 
 ```
+
 
 ```{r}
 titledm_07$names <- gsub("2,4-D" , "twofourd" , titledm_07$names)
@@ -904,16 +779,6 @@ title_dt_07$word <- gsub("twofourd" , "2,4-D" , title_dt_07$word)
 ```
 
 
-```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_07 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
 
 ```{r}
 words07 <- title_dt_07  %>% 
@@ -926,14 +791,14 @@ words07 <- title_dt_07  %>%
 ```
 
 
-```{r} 
+```{r  eval=FALSE}  
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
 wordcloud(words = title_dt_07$word, freq = title_dt_07$freq, min.freq=1, scale=c(4,.1),
-           random.order=FALSE, rot.per=0.35, colors=pal)
+          random.order=FALSE, rot.per=0.35, colors=pal)
 ```
 
 
@@ -946,46 +811,22 @@ wordcloud(words = title_dt_07$word, freq = title_dt_07$freq, min.freq=1, scale=c
 
 # 2008
 
+```{r}
+pdf_08 <- pdf_text("nc2008.pdf") %>% 
+  strsplit(split = "\n")
+```
 
 ```{r}
-ag2008 <- read_html("http://ncwss.org/proceed/2008/agronomic.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-ex2008 <- read_html("http://ncwss.org/proceed/2008/extension.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-phy2008 <- read_html("http://ncwss.org/proceed/2008/physiology.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-hort2008 <- read_html("http://ncwss.org/proceed/2008/horticulture.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-inv2008 <- read_html("http://ncwss.org/proceed/2008/invasiveweeds.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-bem2008 <- read_html("http://ncwss.org/proceed/2008/biology.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-swr2008 <- read_html("http://ncwss.org/proceed/2008/HRC%20Symposium.htm") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-siw2008 <- read_html("http://ncwss.org/proceed/2008/IWM%20symposium.htm") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-siv2008 <- read_html("http://ncwss.org/proceed/2008/MIPN%20Symposium.htm") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-
-nc_2008 <- rbind(ag2008, ex2008, phy2008, hort2008, inv2008, bem2008, swr2008, siw2008, siv2008)
+title_08 <- pdf_08[1:215] 
 ```
 
 
 ```{r warning=FALSE, include=FALSE}
 titledm_08 <- data.frame() # as data frame
 
-for (i in 1:length(nc_2008)) {
+for (i in 1:length(title_08)) {
   print(i)
-  titlelines_08 <- data.frame(names = nc_2008[[i]])
+  titlelines_08 <- data.frame(names = title_08[[i]])
   titledm_08 <- bind_rows(titledm_08, titlelines_08)
 } 
 ```
@@ -1050,17 +891,6 @@ title_dt_08$word <- gsub("twofourd" , "2,4-D" , title_dt_08$word)
 ```
 
 
-```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_08 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
-
 ```{r}
 words08 <- title_dt_08  %>% 
   select(word, freq) %>% 
@@ -1072,16 +902,15 @@ words08 <- title_dt_08  %>%
 ```
 
 
-```{r} 
+```{r  eval=FALSE}  
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
 wordcloud(words = title_dt_08$word, freq = title_dt_08$freq, min.freq=1, scale=c(4,.1),
-           random.order=FALSE, rot.per=0.35, colors=pal)
+          random.order=FALSE, rot.per=0.35, colors=pal)
 ```
-
 
 
 
@@ -1089,41 +918,21 @@ wordcloud(words = title_dt_08$word, freq = title_dt_08$freq, min.freq=1, scale=c
 # 2009
 
 ```{r}
-ag2009 <- read_html("http://ncwss.org/proceed/2009/agronomic.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-ex2009 <- read_html("http://ncwss.org/proceed/2009/extension.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-phy2009 <- read_html("http://ncwss.org/proceed/2009/physiology.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-hort2009 <- read_html("http://ncwss.org/proceed/2009/horticulture.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-inv2009 <- read_html("http://ncwss.org/proceed/2009/invasiveweeds.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-bem2009 <- read_html("http://ncwss.org/proceed/2009/biology.html") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-lea2009 <- read_html("http://ncwss.org/proceed/2009/Learning%20store%20symposium.htm") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-st2009 <- read_html("http://ncwss.org/proceed/2009/statistics%20symposium.htm") %>% 
-  html_nodes(xpath = "//strong") %>%
-  html_text() 
-
-
-nc_2009 <- rbind(ag2009, ex2009, phy2009, hort2009, inv2009, bem2009, lea2009, st2009)
+pdf_09 <- pdf_text("nc2009.pdf") %>% 
+  strsplit(split = "\n")
 ```
+
+```{r}
+title_09 <- pdf_09[1:165] 
+```
+
 
 ```{r warning=FALSE, include=FALSE}
 titledm_09 <- data.frame() # as data frame
 
-for (i in 1:length(nc_2009)) {
+for (i in 1:length(title_09)) {
   print(i)
-  titlelines_09 <- data.frame(names = nc_2009[[i]])
+  titlelines_09 <- data.frame(names = title_09[[i]])
   titledm_09 <- bind_rows(titledm_09, titlelines_09)
 } 
 ```
@@ -1189,17 +998,6 @@ title_dt_09$word <- gsub("twofourd" , "2,4-D" , title_dt_09$word)
 ```
 
 
-```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_09 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
-
 ```{r}
 words09 <- title_dt_09  %>% 
   select(word, freq) %>% 
@@ -1211,18 +1009,15 @@ words09 <- title_dt_09  %>%
 ```
 
 
-```{r} 
+```{r  eval=FALSE}  
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
 wordcloud(words = title_dt_09$word, freq = title_dt_09$freq, min.freq=1, scale=c(4,.1),
-           random.order=FALSE, rot.per=0.35, colors=pal)
+          random.order=FALSE, rot.per=0.35, colors=pal)
 ```
-
-
-
 
 
 
@@ -1235,7 +1030,7 @@ wordcloud(words = title_dt_09$word, freq = title_dt_09$freq, min.freq=1, scale=c
 
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 nc2010 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2010-Proceedings.pdf", "nc2010.pdf", mode = "wb")
 nc2011 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2011-Proceedings.pdf", "nc2011.pdf", mode = "wb")
 nc2012 <- download("http://ncwss.org/wp-content/uploads/2015/03/NCWSS-2012-Proceedings.pdf", "nc2012.pdf", mode = "wb")
@@ -1294,7 +1089,8 @@ for (i in 1:length(authors_10)) {
 
 #tokerization
 authors_tokens_10 <- authorsdm_10 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -1353,17 +1149,6 @@ title_dt_10$word <- gsub("twofourd" , "2,4-D" , title_dt_10$word)
 ```
 
 
-```{r fig.cap= "Most frequent words (n=30+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_10 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
-
 ```{r}
 words10 <- title_dt_10  %>% 
   select(word, freq) %>% 
@@ -1375,7 +1160,7 @@ words10 <- title_dt_10  %>%
 ```
 
 
-```{r warning=FALSE} 
+```{r eval=FALSE, include=FALSE}   
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
@@ -1436,7 +1221,8 @@ for (i in 1:length(authors_11)) {
 
 #tokerization
 authors_tokens_11 <- authorsdm_11 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -1493,16 +1279,6 @@ title_dt_11$word <- gsub("twofourd" , "2,4-D" , title_dt_11$word)
 ```
 
 
-```{r fig.cap= "Most frequent words (n=10+) that appeared in the WSSA/WSWS oral and poster presentation titles."}
-title_dt_11 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,150) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
 
 ```{r}
 words11 <- title_dt_11  %>% 
@@ -1516,7 +1292,7 @@ words11 <- title_dt_11  %>%
 
 
 
-```{r warning=FALSE} 
+```{r eval=FALSE, include=FALSE}  
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -1572,7 +1348,8 @@ for (i in 1:length(authors_12)) {
 
 #tokerization
 authors_tokens_12 <- authorsdm_12 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -1588,10 +1365,7 @@ for (i in 1:length(rm_author_12)) {
   rm_authors_numbers_12 <- c(paste0(authors_tokens_12$words, i))
   rm_authors_number_12 <- c(rm_authors_number_12, rm_authors_numbers_12)
 }
-```
 
-
-```{r}
 rm_authors_12 <- data.frame(rm_authors_number_12) 
 rm_authors_12 <- rename(rm_authors_12, words = rm_authors_number_12) 
 rm_authors_12$words <- as.character(rm_authors_12$words)
@@ -1635,17 +1409,6 @@ title_dt_12$word <- gsub("twofourd" , "2,4-D" , title_dt_12$word)
 
 
 ```{r}
-title_dt_12 %>% 
-  filter(freq >= 100) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
-
-```{r}
 words12 <- title_dt_12  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
@@ -1655,7 +1418,7 @@ words12 <- title_dt_12  %>%
   mutate(year = "2012")
 ```
 
-```{r warning=FALSE} 
+```{r eval=FALSE, include=FALSE}   
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -1710,7 +1473,8 @@ for (i in 1:length(authors_13)) {
 
 #tokerization
 authors_tokens_13 <- authorsdm_13 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -1729,7 +1493,7 @@ for (i in 1:length(rm_author_13)) {
 
 rm_authors_13 <- data.frame(rm_authors_number_13) 
 rm_authors_13 <- rename(rm_authors_13, words = rm_authors_number_13) 
-rm_authors_13$words <- as.character(rm_authors_13$words)
+rm_authors_13$words <- as.character(rm_authors_13$words) 
 ```
 
 
@@ -1771,16 +1535,6 @@ title_dt_13$word <- gsub("twofourd" , "2,4-D" , title_dt_13$word)
 ```
 
 
-```{r}
-title_dt_13 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + ylim(0,50) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
 
 ```{r}
 words13 <- title_dt_13  %>% 
@@ -1793,7 +1547,7 @@ words13 <- title_dt_13  %>%
 ```
 
 
-```{r} 
+```{r eval=FALSE, include=FALSE}   
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -1850,7 +1604,8 @@ for (i in 1:length(authors_14)) {
 
 #tokerization
 authors_tokens_14 <- authorsdm_14 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -1910,17 +1665,6 @@ title_dt_14$word <- gsub("twofourd" , "2,4-D" , title_dt_14$word)
 
 
 ```{r}
-title_dt_14 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
-
-```{r}
 words14 <- title_dt_14  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
@@ -1931,7 +1675,7 @@ words14 <- title_dt_14  %>%
 ```
 
 
-```{r} 
+```{r eval=FALSE, include=FALSE}   
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -1988,7 +1732,8 @@ for (i in 1:length(authors_15)) {
 
 #tokerization
 authors_tokens_15 <- authorsdm_15 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -2045,16 +1790,6 @@ title_dt_15$word <- gsub("twofourd" , "2,4-D" , title_dt_15$word)
 ```
 
 
-```{r}
-title_dt_15 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
 
 ```{r}
 words15 <- title_dt_15  %>% 
@@ -2066,7 +1801,7 @@ words15 <- title_dt_15  %>%
   mutate(year = "2015")
 ```
 
-```{r} 
+```{r eval=FALSE, include=FALSE} 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -2126,7 +1861,8 @@ for (i in 1:length(authors_16)) {
 
 #tokerization
 authors_tokens_16 <- authorsdm_16 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -2183,16 +1919,6 @@ title_dt_16$word <- gsub("twofourd" , "2,4-D" , title_dt_16$word)
 ```
 
 
-```{r}
-title_dt_16 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
 
 ```{r}
 words16 <- title_dt_16  %>% 
@@ -2204,7 +1930,7 @@ words16 <- title_dt_16  %>%
   mutate(year = "2016")
 ```
 
-```{r} 
+```{r eval=FALSE, include=FALSE}   
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -2261,7 +1987,8 @@ for (i in 1:length(authors_17)) {
 
 #tokerization
 authors_tokens_17 <- authorsdm_17 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -2319,16 +2046,6 @@ title_dt_17$word <- gsub("twofourd" , "2,4-D" , title_dt_17$word)
 ```
 
 
-```{r}
-title_dt_17 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
 
 ```{r}
 words17 <- title_dt_17  %>% 
@@ -2340,7 +2057,7 @@ words17 <- title_dt_17  %>%
   mutate(year = "2017")
 ```
 
-```{r} 
+```{r eval=FALSE, include=FALSE}   
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -2398,7 +2115,8 @@ for (i in 1:length(authors_18)) {
 
 #tokerization
 authors_tokens_18 <- authorsdm_18 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -2456,17 +2174,6 @@ title_dt_18$word <- gsub("twofourd" , "2,4-D" , title_dt_18$word)
 
 
 ```{r}
-title_dt_18 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
-
-```{r}
 words18 <- title_dt_18  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
@@ -2476,7 +2183,7 @@ words18 <- title_dt_18  %>%
   mutate(year = "2018") 
 ```
 
-```{r} 
+```{r eval=FALSE, include=FALSE}  
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -2523,6 +2230,7 @@ title_tokens_19 <- titledm_19 %>%
 
 
 
+
 ```{r warning=FALSE, include=FALSE}
 authors_19 <- pdf_18[108:112]
 
@@ -2536,7 +2244,8 @@ for (i in 1:length(authors_19)) {
 
 #tokerization
 authors_tokens_19 <- authorsdm_19 %>%
-  unnest_tokens(words, names)
+  unnest_tokens(words, names) %>% 
+  filter(words != "weed")
 ```
 
 ```{r warning=FALSE}
@@ -2560,10 +2269,10 @@ rm_authors_19$words <- as.character(rm_authors_19$words)
 
 
 ```{r }
-title_tokens_19 <- anti_join(title_tokens_18, rm_authors_19, by = "words") 
-title_tokens_19 <- anti_join(title_tokens_18, stop_wssaprogram_words_tokens, by = "words") 
-title_tokens_19 <- anti_join(title_tokens_18, stopwords_tokens, by = "words") 
-title_tokens_19 <- anti_join(title_tokens_18, authors_tokens_19, by = "words") 
+title_tokens_19 <- anti_join(title_tokens_19, rm_authors_19, by = "words") 
+title_tokens_19 <- anti_join(title_tokens_19, stop_wssaprogram_words_tokens, by = "words") 
+title_tokens_19 <- anti_join(title_tokens_19, stopwords_tokens, by = "words") 
+title_tokens_19 <- anti_join(title_tokens_19, authors_tokens_19, by = "words") 
 ```
 
 
@@ -2593,17 +2302,6 @@ title_dt_19$word <- gsub("twofourd" , "2,4-D" , title_dt_19$word)
 ```
 
 
-```{r}
-title_dt_19 %>% 
-  filter(freq >= 10) %>% 
-  ggplot(aes(x=reorder(word,freq), y=freq, fill=freq)) +
-  scale_fill_continuous(low = "#FFF6F6", high = "#9b0000") +
-  geom_col(show.legend=FALSE) + coord_flip() + theme_classic() +
-  labs(y="Frequence (n)", x="Words") + #ylim(0,50) +
-  theme(axis.title = element_text(size=15),
-        axis.text = element_text(size=13)) 
-```
-
 
 ```{r}
 words19 <- title_dt_19  %>% 
@@ -2616,8 +2314,7 @@ words19 <- title_dt_19  %>%
 ```
 
 
-
-```{r message = FALSE, warning=FALSE} 
+```{r message = FALSE, warning=FALSE, eval=FALSE, include=FALSE} 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
 set.seed(1234)
@@ -2631,7 +2328,7 @@ wordcloud(words = title_dt_19$word, freq = title_dt_19$freq, min.freq=2, scale=c
 
 
 ```{r}
-Data <- bind_rows(words02, words03, words04, words05, words06, words08, words09, words10, words11, words12, words13, words14, words15, words16, words17, words18, words19)
+Data <- bind_rows(words01, words02, words03, words04, words05, words06, words07, words08, words09, words10, words11, words12, words13, words14, words15, words16, words17, words18, words19)
 Data$year <- as.numeric(Data$year)
 data <- Data %>% 
   filter( word == "palmer" | word == "glyphosate" |  word == "dicamba" | word == "resistant")
@@ -2640,7 +2337,7 @@ data <- Data %>%
 
 
 
-```{r warning = FALSE}
+```{r  eval=FALSE}
 Data %>% 
     ggplot(aes(y=freq, label = word, size = word, color = word)) + 
       #geom_bar(stat ="identity", show.legend = FALSE) + 
@@ -2650,7 +2347,7 @@ Data %>%
       ggsave("cloud.png", height=12, width = 12)
 ```
 
-```{r}
+```{r eval=FALSE}
 Data %>% 
   #filter(year == "2005" | year == "2011") %>% 
 ggplot(aes(freq/nn, fill = year)) +
@@ -2665,10 +2362,91 @@ freq_by_rank <- Data %>%
   group_by(year) %>% 
   mutate(rank = row_number(), 
          `term frequency` = freq/nn)
-
-freq_by_rank
 ```
+
+
 ```{r}
+freq_by_rank <- freq_by_rank %>% 
+  mutate(highlight = ifelse(word %in% c("control", "glyphosate", "dicamba", "2,4-D", "resistance",
+                                            "horseweed"), TRUE, FALSE),
+       variable_col = if_else(highlight == TRUE, word, "NA"))
+```
+
+```{r}
+#Set theme
+library(extrafont)
+font_family <- 'Arial'
+background <- "#1D1D1D"
+text_colour <- "white"
+axis_colour <- "white"
+plot_colour <- "black"
+theme_style <- theme(text = element_text(family = font_family),
+                  rect = element_rect(fill = background),
+                  plot.background = element_rect(fill = background, color = NA),
+                  plot.title = element_text(face = 'bold', size = 50, colour = text_colour),
+                  plot.subtitle = element_text(size = 25, colour = text_colour),
+                  plot.caption = element_text(size = 20, colour = text_colour),
+                  panel.background = element_rect(fill = background, color = NA),
+                  panel.border = element_blank(),
+                  panel.grid.major.y = element_blank(),
+                  panel.grid.major.x = element_blank(),
+                  panel.grid.minor.x = element_blank(),
+                  plot.margin = unit(c(2, 2, 2, 2), "cm"),
+                  axis.title.y = element_text(face = 'bold', size = 35, colour = text_colour),
+                  axis.title.x = element_blank(),
+                  axis.text.x = element_text(size = 35, colour= axis_colour, vjust = 14),
+                  axis.text.y = element_text(size = 35, colour = text_colour),
+                  axis.ticks = element_blank(),
+                  axis.line = element_blank(),
+                  legend.text = element_text(size = 20, colour= text_colour),
+                  legend.title = element_text(size = 25, colour= text_colour),
+                  legend.position="none")
+
+theme_set(theme_classic() + theme_style)
+
+#Set colour palette
+cols <- c("#FE5F55", "#4281A4", "#48A9A6", "#D4B483", "#E4DFDA", "#39393A", "#C1666B")
+```
+
+                                            
+
+
+```{r}
+#Plot data
+freq_by_rank <- freq_by_rank %>% 
+  filter(rank < 101) 
+ggplot(freq_by_rank, aes(x = year, y = rank, group = word)) +
+  geom_line(aes(color = variable_col), size = 2) +
+  geom_point(aes(color = variable_col), size = 6) +
+  scale_y_reverse(breaks = 100:1) +
+  scale_x_continuous(breaks = seq(2001, 2019, 2), limits= c(2000, 2020), 
+                     expand = c(.05, .05)) +
+  geom_text(data = freq_by_rank %>%  filter(year == "2001"),
+            aes(label = word, x = 2000.8, color = variable_col),
+            hjust = "right",
+            fontface = "bold",
+            size = 7) +
+  geom_text(data = freq_by_rank %>%  filter(year == "2019"),
+            aes(label = word, x = 2019.2, color = variable_col),
+            hjust = "left",
+            fontface = "bold",
+            size = 7) +
+  coord_cartesian(ylim = c(101,1)) +
+  scale_color_manual(values = cols) +
+  #scale_y_reverse(breaks = 1:nrow(NY_kids)) +
+  labs(title = "NCWSS word frequency in the XXI century ",
+       subtitle = "A NCWSS Meeting text analysis of title and abstracts from 2001 through 2019",
+       caption = "Vizualisation: @maxwelco | Source: NCWSS")
+
+#Export plot
+ggsave("word_rank.png", width = 30, height = 45, dpi=600)
+```
+
+
+
+
+
+```{r eval=FALSE}
 freq_by_rank %>% 
   mutate(year = as.factor(year)) %>% 
   ggplot(aes(rank, `term frequency`, color = year)) + 
@@ -2677,7 +2455,7 @@ freq_by_rank %>%
   scale_y_log10()
 ```
 
-```{r}
+```{r eval=FALSE}
 rank_subset <- freq_by_rank %>% 
   filter(rank < 500,
          rank > 10)
@@ -2685,7 +2463,7 @@ rank_subset <- freq_by_rank %>%
 lm(log10(`term frequency`) ~ log10(rank), data = rank_subset)
 ```
 
-```{r}
+```{r eval=FALSE}
 freq_by_rank %>%
   mutate(year = as.factor(year)) %>% 
   ggplot(aes(rank, `term frequency`, color = year)) + 
@@ -2695,7 +2473,7 @@ freq_by_rank %>%
   scale_y_log10()
 ```
 
-```{r}
+```{r eval=FALSE}
 year_words <- Data %>%
   filter
   bind_tf_idf(word, year, freq)
@@ -2703,7 +2481,7 @@ year_words <- Data %>%
 year_words
 ```
 
-```{r}
+```{r eval=FALSE}
 year_words %>%
   select(-nn) %>%
   arrange(desc(tf_idf))
@@ -2711,7 +2489,7 @@ year_words %>%
 
 
 
-```{r}
+```{r eval=FALSE}
 year_words %>%
   arrange(desc(tf_idf)) %>%
   mutate(word = factor(word, levels = rev(unique(word)))) %>% 
@@ -2727,7 +2505,7 @@ year_words %>%
 ```
 
 
-```{r}
+```{r eval=FALSE}
 data <- rbind(words02, words03, words04, words05)
 year_words <- data %>%
   bind_tf_idf(word, year, freq)
@@ -2735,7 +2513,7 @@ year_words <- data %>%
 year_words
 ```
 
-```{r}
+```{r eval=FALSE}
 year_words %>%
   select(-nn) %>%
   arrange(desc(tf_idf))
@@ -2743,7 +2521,7 @@ year_words %>%
 
 
 
-```{r}
+```{r eval=FALSE}
 year_words %>%
   arrange(desc(tf_idf)) %>%
   mutate(word = factor(word, levels = rev(unique(word)))) %>% 
