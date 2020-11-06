@@ -59,7 +59,7 @@ stop_wssaprogram_words <- c("janet", "harrington", "calvin", "don", "thelen", "f
                             "univ", "ames", "michael", "mark", "dallas", "associate",
                             "david", "manhattan", "urbana", "bernard",
                             "patrick", "marysville", "mike", "dean", "john", 
-                            "robert", "bryan", "phillip", "jeffrey",
+                            "robert", "bryan", "phillip", "jeffrey", "abstract",
                             "gary", "eric", "bob", "carol", "ellen", "rob", "fred", 
                             "joanne", "donald", "chris", "lary",
                             "director", "loyd", "hartzler", "sprague", "christy", "kent", 
@@ -164,7 +164,7 @@ stop_wssaprogram_words <- c("janet", "harrington", "calvin", "don", "thelen", "f
                             "wolf", "kenneth", "karen", "gerard", "harankhedkar", "golus", "w.donald",
                             "bauman", "czapar", "greg", "dahl", "gednalske", "michaeland", "jan", "joe",
                             "gerald", "dinicola", "beverly", "scientist", "addendum",
-                            "durgan", "stoltenberg", "annual"
+                            "durgan", "stoltenberg", "annual", "proc", "symbols", "agronomy"
                             )
 
 
@@ -173,5 +173,7 @@ stop_wssaprogram_words <- data_frame(stop_wssaprogram_words)
 #tokerization
 stop_wssaprogram_words_tokens <- stop_wssaprogram_words %>%
   unnest_tokens(words, stop_wssaprogram_words)
+stop_wssaprogram_words <- stop_wssaprogram_words %>%
+  unnest_tokens(word, stop_wssaprogram_words)
 
 

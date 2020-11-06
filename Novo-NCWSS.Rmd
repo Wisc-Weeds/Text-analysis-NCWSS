@@ -33,13 +33,6 @@ clean_corpus <- function(corpus){
   corpus <- tm_map(corpus, removePunctuation) # remove punctuation
   corpus <- tm_map(corpus, content_transformer(tolower)) # remove punctuation
   corpus <- tm_map(corpus, removeNumbers) # remove numbers
-  corpus <- tm_map(corpus, removeWords, stopwords_en) # remove stop words
-  corpus <- tm_map(corpus, removeWords, stopwords_en) # remove stop words
-  corpus <- tm_map(corpus, removeWords, stopwords_first) # remove stop words 
-  corpus <- tm_map(corpus, removeWords, stopwords_last) # remove stop words
-  corpus <- tm_map(corpus, removeWords, stopwords_countries) # remove stop words
-  corpus <- tm_map(corpus, removeWords, stopwords_state) # remove stop words
-  corpus <- tm_map(corpus, removeWords, stopwords_capitals ) # remove stop words  
   corpus
 }
 ```
@@ -50,13 +43,13 @@ clean_corpus <- function(corpus){
 ```{r}
 pdf_01 <- pdf_text("nc2001.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_01 <- pdf_01[5:211] 
-```
 
-```{r warning=FALSE, include=FALSE}
+
+
 titledm_01 <- data.frame() # as data frame
 
 for (i in 1:length(title_01)) {
@@ -64,20 +57,20 @@ for (i in 1:length(title_01)) {
   titlelines <- data.frame(names = title_01[[i]])
   titledm_01 <- bind_rows(titledm_01, titlelines)
 } 
-```
 
-```{r}
+
+
+
 titledm_01$names <- gsub("2,4-D" , "twofourd" , titledm_01$names)
-```
 
-```{r}
+
+
+
 title_tokens_01 <- titledm_01 %>%
   unnest_tokens(words, names)
-```
 
 
 
-```{r include=FALSE}
 authors_01 <- read_html("http://ncwss.org/proceed/2001/indexes/author.htm") %>% 
   html_nodes(xpath = "/html") %>%
   html_text() 
@@ -86,48 +79,46 @@ authors_01 <- data_frame(authors_01)
 #tokerization
 authors_tokens_01 <- authors_01 %>%
   unnest_tokens(words, authors_01) %>% 
-  filter(words != "weed")
-```
+  filter(words != "weed" & words != "palmer")
 
 
 
 
-```{r }
-title_tokens_01 <- anti_join(title_tokens_01, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_01 <- anti_join(title_tokens_01, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_01 <- anti_join(title_tokens_01, stopwords_tokens, by = "words") 
 title_tokens_01 <- anti_join(title_tokens_01, authors_tokens_01, by = "words") 
-```
 
 
 
-```{r}
+
 title_source_01 <- VectorSource(title_tokens_01$words)
 title_corpus_01 <- VCorpus(title_source_01)
-```
-
-```{r}
 title_corpus_01 <- clean_corpus(title_corpus_01)
-```
 
-```{r}
+
+
+
 title_dtm_01 <- TermDocumentMatrix(title_corpus_01)
 title_matrix_01 <- as.matrix(title_dtm_01)
 title_v_01 <- sort(rowSums(title_matrix_01), decreasing=TRUE)
 title_dt_01 <- data.frame(word = names(title_v_01),freq=title_v_01)
-```
 
-```{r}
+
+
+
 title_dt_01$word <- gsub("twofourd" , "2,4-D" , title_dt_01$word)
-```
 
-```{r}
+
+
+
 words01 <- title_dt_01  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2001")
+  mutate(year = "2001") %>% 
+  anti_join(stop_wssaprogram_words) 
 ```
 
 
@@ -189,7 +180,7 @@ authors_tokens_02 <- authors_02 %>%
 
 
 ```{r }
-title_tokens_02 <- anti_join(title_tokens_02, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_02 <- anti_join(title_tokens_02, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_02 <- anti_join(title_tokens_02, stopwords_tokens, by = "words") 
 title_tokens_02 <- anti_join(title_tokens_02, authors_tokens_02, by = "words") 
 ```
@@ -198,9 +189,6 @@ title_tokens_02 <- anti_join(title_tokens_02, authors_tokens_02, by = "words")
 ```{r}
 title_source_02 <- VectorSource(title_tokens_02$words)
 title_corpus_02 <- VCorpus(title_source_02)
-```
-
-```{r}
 title_corpus_02 <- clean_corpus(title_corpus_02)
 ```
 
@@ -222,8 +210,9 @@ words02 <- title_dt_02  %>%
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2002")
+  mutate(year = "2002") 
 ```
+
 
 
 
@@ -249,13 +238,13 @@ wordcloud(words = title_dt_02$word, freq = title_dt_02$freq, min.freq=1, scale=c
 ```{r}
 pdf_03 <- pdf_text("nc2003.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_03 <- pdf_03[1:205] 
-```
 
-```{r warning=FALSE, include=FALSE}
+
+
 titledm_03 <- data.frame() # as data frame
 
 for (i in 1:length(title_03)) {
@@ -263,71 +252,67 @@ for (i in 1:length(title_03)) {
   titlelines <- data.frame(names = title_03[[i]])
   titledm_03 <- bind_rows(titledm_03, titlelines)
 } 
-```
 
-```{r}
+
+
 titledm_03$names <- gsub("2,4-D" , "twofourd" , titledm_03$names)
-```
 
-```{r}
+
+
+
 title_tokens_03 <- titledm_03 %>%
   unnest_tokens(words, names)
-```
 
 
-```{r eval=FALSE, include=FALSE}
+
+
 authors_03 <- read_html("http://ncwss.org/proceed/2003/Proc03/abstracts/author%20index.htm") %>% 
-  html_nodes(xpath = "/html/body/ilayer/table[2]") %>%
+  html_nodes(xpath = "/html/body/ilayer/table[.]") %>%
   html_text() 
 authors_03 <- c(authors_03)
 authors_03 <- data_frame(authors_03)
 #tokerization
 authors_tokens_03 <- authors_03 %>%
   unnest_tokens(words, authors_03)
-```
 
 
 
-```{r }
-title_tokens_03 <- anti_join(title_tokens_03, stop_wssaprogram_words_tokens, by = "words") 
+
+#title_tokens_03 <- anti_join(title_tokens_03, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_03 <- anti_join(title_tokens_03, stopwords_tokens, by = "words") 
 title_tokens_03 <- anti_join(title_tokens_03, authors_tokens_03, by = "words") 
-```
 
 
 
 
-```{r}
 title_source_03 <- VectorSource(title_tokens_03$words)
 title_corpus_03 <- VCorpus(title_source_03)
-```
-
-
-```{r}
 title_corpus_03 <- clean_corpus(title_corpus_03)
-```
 
-```{r}
+
+
+
 title_dtm_03 <- TermDocumentMatrix(title_corpus_03)
 title_matrix_03 <- as.matrix(title_dtm_03)
 title_v_03 <- sort(rowSums(title_matrix_03), decreasing=TRUE)
 title_dt_03 <- data.frame(word = names(title_v_03),freq=title_v_03)
-```
 
-```{r}
+
+
 title_dt_03$word <- gsub("twofourd" , "2,4-D" , title_dt_03$word)
-```
 
 
-```{r}
+
 words03 <- title_dt_03  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2003")
+  mutate(year = "2003") %>% 
+  anti_join(stop_wssaprogram_words) 
 ```
+
 
 
 ```{r message=FALSE, warning=FALSE, eval=FALSE} 
@@ -351,14 +336,13 @@ wordcloud(words = title_dt_03$word, freq = title_dt_03$freq, min.freq=1, scale=c
 ```{r}
 pdf_04 <- pdf_text("nc2004.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_04 <- pdf_04[3:188] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_04 <- data.frame() # as data frame
 
 for (i in 1:length(title_04)) {
@@ -366,20 +350,20 @@ for (i in 1:length(title_04)) {
   titlelines <- data.frame(names = title_04[[i]])
   titledm_04 <- bind_rows(titledm_04, titlelines)
 } 
-```
 
-```{r}
+
+
+
 titledm_04$names <- gsub("2,4-D" , "twofourd" , titledm_04$names)
-```
 
 
-```{r}
+
 title_tokens_04 <- titledm_04 %>%
   unnest_tokens(words, names)
-```
 
 
-```{r eval=FALSE, include=FALSE}
+
+
 authors_04 <- read_html("http://ncwss.org/proceed/2004/proc04/abstracts/authors.htm") %>% 
   html_nodes(xpath = "//table[2]") %>%
   html_text() 
@@ -388,51 +372,43 @@ authors_04 <- data_frame(authors_04)
 #tokerization
 authors_tokens_04 <- authors_04 %>%
   unnest_tokens(words, authors_04)
-```
 
 
-```{r }
-title_tokens_04 <- anti_join(title_tokens_04, stop_wssaprogram_words_tokens, by = "words") 
+
+
+#title_tokens_04 <- anti_join(title_tokens_04, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_04 <- anti_join(title_tokens_04, stopwords_tokens, by = "words") 
 title_tokens_04 <- anti_join(title_tokens_04, authors_tokens_04, by = "words") 
-```
 
 
-```{r}
+
+
 title_source_04 <- VectorSource(title_tokens_04$words)
 title_corpus_04 <- VCorpus(title_source_04)
-```
-
-
-
-```{r}
 title_corpus_04 <- clean_corpus(title_corpus_04)
-```
 
 
 
-```{r}
+
 title_dtm_04 <- TermDocumentMatrix(title_corpus_04)
 title_matrix_04 <- as.matrix(title_dtm_04)
 title_v_04 <- sort(rowSums(title_matrix_04), decreasing=TRUE)
 title_dt_04 <- data.frame(word = names(title_v_04),freq=title_v_04)
-```
 
 
-```{r}
+
 title_dt_04$word <- gsub("twofourd" , "2,4-D" , title_dt_04$word)
-```
 
 
 
-```{r}
 words04 <- title_dt_04  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2004")
+  mutate(year = "2004")  %>% 
+  anti_join(stop_wssaprogram_words) 
 ```
 
 
@@ -460,14 +436,12 @@ wordcloud(words = title_dt_04$word, freq = title_dt_04$freq, min.freq=1, scale=c
 ```{r}
 pdf_05 <- pdf_text("nc2005.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
 title_05 <- pdf_05[1:229] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_05 <- data.frame() # as data frame
 
 for (i in 1:length(title_05)) {
@@ -475,19 +449,20 @@ for (i in 1:length(title_05)) {
   titlelines <- data.frame(names = title_05[[i]])
   titledm_05 <- bind_rows(titledm_05, titlelines)
 } 
-```
 
-```{r}
+
+
 titledm_05$names <- gsub("2,4-D" , "twofourd" , titledm_05$names)
-```
 
-```{r}
+
+
+
 title_tokens_05 <- titledm_05 %>%
   unnest_tokens(words, names)
-```
 
 
-```{r eval=FALSE, include=FALSE}
+
+
 authors_05 <- read_html("http://ncwss.org/proceed/2005/proc05/abstracts/author.htm") %>% 
   html_nodes(xpath = "//table[2]") %>%
   html_text() 
@@ -496,50 +471,44 @@ authors_05 <- data_frame(authors_05)
 #tokerization
 authors_tokens_05 <- authors_05 %>%
   unnest_tokens(words, authors_05)
-```
 
 
-```{r }
-title_tokens_05 <- anti_join(title_tokens_05, stop_wssaprogram_words_tokens, by = "words") 
+
+
+#title_tokens_05 <- anti_join(title_tokens_05, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_05 <- anti_join(title_tokens_05, stopwords_tokens, by = "words") 
 title_tokens_05 <- anti_join(title_tokens_05, authors_tokens_05, by = "words") 
-```
 
 
-```{r}
+
+
 title_source_05 <- VectorSource(title_tokens_05$words)
 title_corpus_05 <- VCorpus(title_source_05)
-```
-
-
-
-```{r}
 title_corpus_05 <- clean_corpus(title_corpus_05)
-```
 
 
 
-```{r}
+
+
 title_dtm_05 <- TermDocumentMatrix(title_corpus_05)
 title_matrix_05 <- as.matrix(title_dtm_05)
 title_v_05 <- sort(rowSums(title_matrix_05), decreasing=TRUE)
 title_dt_05 <- data.frame(word = names(title_v_05),freq=title_v_05)
-```
 
 
-```{r}
+
 title_dt_05$word <- gsub("twofourd" , "2,4-D" , title_dt_05$word)
-```
 
 
-```{r}
+
 words05 <- title_dt_05  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2005")
+  mutate(year = "2005") %>% 
+  anti_join(stop_wssaprogram_words) 
 ```
 
 
@@ -562,14 +531,15 @@ wordcloud(words = title_dt_05$word, freq = title_dt_05$freq, min.freq=1, scale=c
 ```{r}
 pdf_06 <- pdf_text("nc2006.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
+
 title_06 <- pdf_06[1:216] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
+
 titledm_06 <- data.frame() # as data frame
 
 for (i in 1:length(title_06)) {
@@ -577,109 +547,64 @@ for (i in 1:length(title_06)) {
   titlelines_06 <- data.frame(names = title_06[[i]])
   titledm_06 <- bind_rows(titledm_06, titlelines_06)
 } 
-```
 
-```{r}
+
+
 titledm_06$names <- gsub("2,4-D" , "twofourd" , titledm_06$names)
-```
 
 
-```{r}
+
+
 title_tokens_06 <- titledm_06 %>%
   unnest_tokens(words, names)
-```
 
 
-```{r warning=FALSE, include=FALSE}
-authors_06 <- pdf_06[21:28]
 
-authorsdm_06 <- data.frame()
-
-for (i in 1:length(authors_06)) {
-  print(i)
-  authorslines_06 <- data.frame(names = authors_06[[i]])
-  authorsdm_06 <- bind_rows(authorsdm_06, authorslines_06)
-} 
-
+authors_06 <- read_html("http://ncwss.org/proceed/2006/authorindex.html") %>% 
+  html_nodes(xpath = "/html/body") %>%
+  html_text() 
+authors_06 <- c(authors_06)
+authors_06 <- data_frame(authors_06)
 #tokerization
-authors_tokens_06 <- authorsdm_06 %>%
-  unnest_tokens(words, names)
-```
+authors_tokens_06 <- authors_06 %>%
+  unnest_tokens(words, authors_06) %>% 
+  filter(words != "weed")
 
 
-
-```{r warning=FALSE}
 title_tokens_06 <- anti_join(title_tokens_06, authors_tokens_06, by = "words")
-```
 
 
-
-```{r include=FALSE}
-rm_author_06 <- c(1:12) 
-rm_authors_number_06 <-c()
-for (i in 1:length(rm_author_06)) {
-  print(i)
-  rm_authors_numbers_06 <- c(paste0(authors_tokens_06$words, i))
-  rm_authors_number_06 <- c(rm_authors_number_06, rm_authors_numbers_06)
-}
-```
-
-
-```{r}
-rm_authors_06 <- data.frame(rm_authors_number_06) 
-rm_authors_06 <- rename(rm_authors_06, words = rm_authors_number_06) 
-rm_authors_06$words <- as.character(rm_authors_06$words)
-```
-
-
-```{r }
-title_tokens_06 <- anti_join(title_tokens_06, rm_authors_06, by = "words") 
-```
-
-
-```{r }
-title_tokens_06 <- anti_join(title_tokens_06, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_06 <- anti_join(title_tokens_06, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_06 <- anti_join(title_tokens_06, stopwords_tokens, by = "words") 
 title_tokens_06 <- anti_join(title_tokens_06, authors_tokens_06, by = "words") 
-```
 
 
-```{r}
+
+
 title_source_06 <- VectorSource(title_tokens_06$words)
 title_corpus_06 <- VCorpus(title_source_06)
-```
-
-
-
-```{r}
 title_corpus_06 <- clean_corpus(title_corpus_06)
-```
 
 
 
-```{r}
 title_dtm_06 <- TermDocumentMatrix(title_corpus_06)
 title_matrix_06 <- as.matrix(title_dtm_06)
 title_v_06 <- sort(rowSums(title_matrix_06), decreasing=TRUE)
 title_dt_06 <- data.frame(word = names(title_v_06),freq=title_v_06)
-```
 
 
-```{r}
 title_dt_06$word <- gsub("twofourd" , "2,4-D" , title_dt_06$word)
-```
 
 
 
-
-```{r}
 words06 <- title_dt_06  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2006")
+  mutate(year = "2006") %>% 
+  anti_join(stop_wssaprogram_words) 
 ```
 
 
@@ -701,14 +626,12 @@ wordcloud(words = title_dt_06$word, freq = title_dt_06$freq, min.freq=1, scale=c
 ```{r}
 pdf_07 <- pdf_text("nc2007.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
 title_07 <- pdf_07[6:248] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_07 <- data.frame() # as data frame
 
 for (i in 1:length(title_07)) {
@@ -716,21 +639,19 @@ for (i in 1:length(title_07)) {
   titlelines_07 <- data.frame(names = title_07[[i]])
   titledm_07 <- bind_rows(titledm_07, titlelines_07)
 } 
-```
 
 
-```{r}
+
 titledm_07$names <- gsub("2,4-D" , "twofourd" , titledm_07$names)
-```
 
 
-```{r}
+
 title_tokens_07 <- titledm_07 %>%
   unnest_tokens(words, names)
-```
 
 
-```{r}
+
+
 authors_07 <- read_html("http://ncwss.org/proceed/2007/authorindex.html") %>% 
   html_nodes(xpath = "//table[.]") %>%
   html_text() 
@@ -739,52 +660,39 @@ authors_07 <- data_frame(authors_07)
 #tokerization
 authors_tokens_07 <- authors_07 %>%
   unnest_tokens(words, authors_07)
-```
 
 
 
-```{r }
 title_tokens_07 <- anti_join(title_tokens_07, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_07 <- anti_join(title_tokens_07, stopwords_tokens, by = "words") 
 title_tokens_07 <- anti_join(title_tokens_07, authors_tokens_07, by = "words") 
-```
 
 
-```{r}
+
 title_source_07 <- VectorSource(title_tokens_07$words)
 title_corpus_07 <- VCorpus(title_source_07)
-```
-
-
-
-```{r}
 title_corpus_07 <- clean_corpus(title_corpus_07)
-```
 
 
 
-```{r}
 title_dtm_07 <- TermDocumentMatrix(title_corpus_07)
 title_matrix_07 <- as.matrix(title_dtm_07)
 title_v_07 <- sort(rowSums(title_matrix_07), decreasing=TRUE)
 title_dt_07 <- data.frame(word = names(title_v_07),freq=title_v_07)
-```
 
 
-```{r}
+
 title_dt_07$word <- gsub("twofourd" , "2,4-D" , title_dt_07$word)
-```
 
 
-
-```{r}
 words07 <- title_dt_07  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2007")
+  mutate(year = "2007") %>% 
+  anti_join(stop_wssaprogram_words) 
 ```
 
 
@@ -811,14 +719,13 @@ wordcloud(words = title_dt_07$word, freq = title_dt_07$freq, min.freq=1, scale=c
 ```{r}
 pdf_08 <- pdf_text("nc2008.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_08 <- pdf_08[1:215] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_08 <- data.frame() # as data frame
 
 for (i in 1:length(title_08)) {
@@ -826,19 +733,18 @@ for (i in 1:length(title_08)) {
   titlelines_08 <- data.frame(names = title_08[[i]])
   titledm_08 <- bind_rows(titledm_08, titlelines_08)
 } 
-```
 
-```{r}
+
+
 titledm_08$names <- gsub("2,4-D" , "twofourd" , titledm_08$names)
-```
 
-```{r}
+
+
 title_tokens_08 <- titledm_08 %>%
   unnest_tokens(words, names)
-```
 
 
-```{r}
+
 # Authors 2008
 authors_08 <- read_html("http://ncwss.org/proceed/2008/authorindex.html") %>% 
   html_nodes(xpath = "//table[.]") %>%
@@ -848,54 +754,38 @@ authors_08 <- data_frame(authors_08)
 #tokerization
 authors_tokens_08 <- authors_08 %>%
   unnest_tokens(words, authors_08)
-```
 
 
 
-```{r }
-title_tokens_08 <- anti_join(title_tokens_08, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_08 <- anti_join(title_tokens_08, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_08 <- anti_join(title_tokens_08, stopwords_tokens, by = "words") 
 title_tokens_08 <- anti_join(title_tokens_08, authors_tokens_08, by = "words") 
-```
 
 
-
-
-```{r}
 title_source_08 <- VectorSource(title_tokens_08$words)
 title_corpus_08 <- VCorpus(title_source_08)
-```
-
-
-
-
-```{r}
 title_corpus_08 <- clean_corpus(title_corpus_08)
-```
 
 
-
-```{r}
 title_dtm_08 <- TermDocumentMatrix(title_corpus_08)
 title_matrix_08 <- as.matrix(title_dtm_08)
 title_v_08 <- sort(rowSums(title_matrix_08), decreasing=TRUE)
 title_dt_08 <- data.frame(word = names(title_v_08),freq=title_v_08)
-```
 
 
-```{r}
 title_dt_08$word <- gsub("twofourd" , "2,4-D" , title_dt_08$word)
-```
 
 
-```{r}
+
+
 words08 <- title_dt_08  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2008")
+  mutate(year = "2008") %>% 
+  anti_join(stop_wssaprogram_words) 
 ```
 
 
@@ -917,14 +807,13 @@ wordcloud(words = title_dt_08$word, freq = title_dt_08$freq, min.freq=1, scale=c
 ```{r}
 pdf_09 <- pdf_text("nc2009.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_09 <- pdf_09[1:165] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_09 <- data.frame() # as data frame
 
 for (i in 1:length(title_09)) {
@@ -932,20 +821,19 @@ for (i in 1:length(title_09)) {
   titlelines_09 <- data.frame(names = title_09[[i]])
   titledm_09 <- bind_rows(titledm_09, titlelines_09)
 } 
-```
 
-```{r}
+
+
 titledm_09$names <- gsub("2,4-D" , "twofourd" , titledm_09$names)
-```
 
-```{r}
+
+
 title_tokens_09 <- titledm_09 %>%
   unnest_tokens(words, names)
-```
 
 
 
-```{r}
+
 # Authors 2009
 authors_09 <- read_html("http://ncwss.org/proceed/2009/authorindex.html") %>% 
   html_nodes(xpath = "//table[.]") %>%
@@ -955,54 +843,44 @@ authors_09 <- data_frame(authors_09)
 #tokerization
 authors_tokens_09 <- authors_09 %>%
   unnest_tokens(words, authors_09)
-```
 
 
 
-```{r }
-title_tokens_09 <- anti_join(title_tokens_09, stop_wssaprogram_words_tokens, by = "words") 
+
+#title_tokens_09 <- anti_join(title_tokens_09, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_09 <- anti_join(title_tokens_09, stopwords_tokens, by = "words") 
 title_tokens_09 <- anti_join(title_tokens_09, authors_tokens_09, by = "words") 
-```
 
 
 
 
-
-```{r}
 title_source_09 <- VectorSource(title_tokens_09$words)
 title_corpus_09 <- VCorpus(title_source_09)
-```
-
-
-
-```{r}
 title_corpus_09 <- clean_corpus(title_corpus_09)
-```
 
 
 
-```{r}
+
 title_dtm_09 <- TermDocumentMatrix(title_corpus_09)
 title_matrix_09 <- as.matrix(title_dtm_09)
 title_v_09 <- sort(rowSums(title_matrix_09), decreasing=TRUE)
 title_dt_09 <- data.frame(word = names(title_v_09),freq=title_v_09)
-```
 
 
-```{r}
+
+
 title_dt_09$word <- gsub("twofourd" , "2,4-D" , title_dt_09$word)
-```
 
 
-```{r}
+
 words09 <- title_dt_09  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2009")
+  mutate(year = "2009")  %>% 
+  anti_join(stop_wssaprogram_words)
 ```
 
 
@@ -1045,14 +923,12 @@ nc2019 <- download("https://ncwss.org/wp-content/uploads/NCWSS-2019-Proceedings-
 ```{r}
 pdf_10 <- pdf_text("nc2010.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_10 <- pdf_10[14:84] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
 titledm_10 <- data.frame() # as data frame
 
 for (i in 1:length(title_10)) {
@@ -1060,20 +936,19 @@ for (i in 1:length(title_10)) {
   titlelines_10 <- data.frame(names = title_10[[i]])
   titledm_10 <- bind_rows(titledm_10, titlelines_10)
 } 
-```
 
-```{r}
+
+
 titledm_10$names <- gsub("2,4-D" , "twofourd" , titledm_10$names)
-```
 
 
-```{r}
+
 title_tokens_10 <- titledm_10 %>%
   unnest_tokens(words, names)
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
+
 authors_10 <- pdf_10[85:91]
 
 authorsdm_10 <- data.frame()
@@ -1088,14 +963,14 @@ for (i in 1:length(authors_10)) {
 authors_tokens_10 <- authorsdm_10 %>%
   unnest_tokens(words, names) %>% 
   filter(words != "weed")
-```
 
-```{r warning=FALSE}
+
+
 titles_tokens_10 <- anti_join(title_tokens_10, authors_tokens_10, by = "words")
-```
 
 
-```{r include=FALSE}
+
+
 rm_author_10 <- c(1:12) 
 rm_authors_number_10 <-c()
 for (i in 1:length(rm_author_10)) {
@@ -1103,57 +978,48 @@ for (i in 1:length(rm_author_10)) {
   rm_authors_numbers_10 <- c(paste0(authors_tokens_10$words, i))
   rm_authors_number_10 <- c(rm_authors_number_10, rm_authors_numbers_10)
 }
-```
 
-```{r}
+
+
 rm_authors_10 <- data.frame(rm_authors_number_10) 
 rm_authors_10 <- rename(rm_authors_10, words = rm_authors_number_10) 
 rm_authors_10$words <- as.character(rm_authors_10$words)
-```
 
 
-```{r }
+
 title_tokens_10 <- anti_join(title_tokens_10, rm_authors_10, by = "words") 
-title_tokens_10 <- anti_join(title_tokens_10, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_10 <- anti_join(title_tokens_10, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_10 <- anti_join(title_tokens_10, stopwords_tokens, by = "words") 
 title_tokens_10 <- anti_join(title_tokens_10, authors_tokens_10, by = "words") 
-```
 
 
-```{r}
+
+
 title_source_10 <- VectorSource(title_tokens_10$words)
 title_corpus_10 <- VCorpus(title_source_10)
-```
-
-
-
-```{r}
 title_corpus_10 <- clean_corpus(title_corpus_10)
-```
 
 
 
-```{r}
 title_dtm_10 <- TermDocumentMatrix(title_corpus_10)
 title_matrix_10 <- as.matrix(title_dtm_10)
 title_v_10 <- sort(rowSums(title_matrix_10), decreasing=TRUE)
 title_dt_10 <- data.frame(word = names(title_v_10),freq=title_v_10)
-```
 
 
-```{r}
+
 title_dt_10$word <- gsub("twofourd" , "2,4-D" , title_dt_10$word)
-```
 
 
-```{r}
+
 words10 <- title_dt_10  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2010")
+  mutate(year = "2010") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
 
 
@@ -1177,13 +1043,13 @@ wordcloud(words = title_dt_10$word, freq = title_dt_10$freq, min.freq=1, scale=c
 ```{r}
 pdf_11 <- pdf_text("nc2011.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_11 <- pdf_10[24:151] 
-```
 
-```{r warning=FALSE, include=FALSE}
+
+
 titledm_11 <- data.frame() # as data frame
 
 for (i in 1:length(title_11)) {
@@ -1191,21 +1057,19 @@ for (i in 1:length(title_11)) {
   titlelines_11 <- data.frame(names = title_11[[i]])
   titledm_11 <- bind_rows(titledm_11, titlelines_11)
 } 
-```
 
-```{r}
+
+
 titledm_11$names <- gsub("2,4-D" , "twofourd" , titledm_11$names)
-```
 
 
-```{r}
+
 title_tokens_11 <- titledm_11 %>%
   unnest_tokens(words, names)
-```
 
 
 
-```{r warning=FALSE, include=FALSE}
+
 authors_11 <- pdf_11[152:157]
 
 authorsdm_11 <- data.frame()
@@ -1220,14 +1084,14 @@ for (i in 1:length(authors_11)) {
 authors_tokens_11 <- authorsdm_11 %>%
   unnest_tokens(words, names) %>% 
   filter(words != "weed")
-```
 
-```{r warning=FALSE}
+
+
 titles_tokens_11 <- anti_join(title_tokens_11, authors_tokens_11, by = "words")
-```
 
 
-```{r include=FALSE}
+
+
 rm_author_11 <- c(1:12) 
 rm_authors_number_11 <-c()
 for (i in 1:length(rm_author_11)) {
@@ -1239,52 +1103,43 @@ for (i in 1:length(rm_author_11)) {
 rm_authors_11 <- data.frame(rm_authors_number_11) 
 rm_authors_11 <- rename(rm_authors_11, words = rm_authors_number_11) 
 rm_authors_11$words <- as.character(rm_authors_11$words)
-```
 
 
-```{r }
+
+
 title_tokens_11 <- anti_join(title_tokens_11, rm_authors_11, by = "words") 
-title_tokens_11 <- anti_join(title_tokens_11, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_11 <- anti_join(title_tokens_11, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_11 <- anti_join(title_tokens_11, stopwords_tokens, by = "words") 
 title_tokens_11 <- anti_join(title_tokens_11, authors_tokens_11, by = "words") 
-```
 
 
-```{r}
+
+
 title_source_11 <- VectorSource(title_tokens_11$words)
 title_corpus_11 <- VCorpus(title_source_11)
-```
-
-
-
-```{r}
 title_corpus_11 <- clean_corpus(title_corpus_11)
-```
 
 
 
-```{r}
 title_dtm_11 <- TermDocumentMatrix(title_corpus_11)
 title_matrix_11 <- as.matrix(title_dtm_11)
 title_v_11 <- sort(rowSums(title_matrix_11), decreasing=TRUE)
 title_dt_11 <- data.frame(word = names(title_v_11),freq=title_v_11)
-```
 
 
-```{r}
+
 title_dt_11$word <- gsub("twofourd" , "2,4-D" , title_dt_11$word)
-```
 
 
 
-```{r}
 words11 <- title_dt_11  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2011")
+  mutate(year = "2011") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
 
 
@@ -1304,14 +1159,13 @@ wordcloud(words = title_dt_11$word, freq = title_dt_11$freq, min.freq=1, scale=c
 ```{r}
 pdf_12 <- pdf_text("nc2012.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
 title_12 <- pdf_12[16:145] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
+
 titledm_12 <- data.frame() # as data frame
 
 for (i in 1:length(title_12)) {
@@ -1319,20 +1173,19 @@ for (i in 1:length(title_12)) {
   titlelines_12 <- data.frame(names = title_12[[i]])
   titledm_12 <- bind_rows(titledm_12, titlelines_12)
 } 
-```
 
-```{r}
+
+
 titledm_12$names <- gsub("2,4-D" , "twofourd" , titledm_12$names)
-```
 
 
-```{r}
+
 title_tokens_12 <- titledm_12 %>%
   unnest_tokens(words, names)
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
+
 authors_12 <- pdf_12[101:104]
 
 authorsdm_12 <- data.frame()
@@ -1347,14 +1200,15 @@ for (i in 1:length(authors_12)) {
 authors_tokens_12 <- authorsdm_12 %>%
   unnest_tokens(words, names) %>% 
   filter(words != "weed")
-```
 
-```{r warning=FALSE}
+
+
+
 titles_tokens_12 <- anti_join(title_tokens_12, authors_tokens_12, by = "words")
-```
 
 
-```{r include=FALSE}
+
+
 rm_author_12 <- c(1:12) 
 rm_authors_number_12 <-c()
 for (i in 1:length(rm_author_12)) {
@@ -1366,53 +1220,42 @@ for (i in 1:length(rm_author_12)) {
 rm_authors_12 <- data.frame(rm_authors_number_12) 
 rm_authors_12 <- rename(rm_authors_12, words = rm_authors_number_12) 
 rm_authors_12$words <- as.character(rm_authors_12$words)
-```
 
 
-```{r }
+
+
 title_tokens_12 <- anti_join(title_tokens_12, rm_authors_12, by = "words") 
-title_tokens_12 <- anti_join(title_tokens_12, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_12 <- anti_join(title_tokens_12, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_12 <- anti_join(title_tokens_12, stopwords_tokens, by = "words") 
 title_tokens_12 <- anti_join(title_tokens_12, authors_tokens_12, by = "words") 
-```
 
 
 
-```{r}
 title_source_12 <- VectorSource(title_tokens_12$words)
 title_corpus_12 <- VCorpus(title_source_12)
-```
-
-
-
-```{r}
-# this code section will take long (~3 min) to run. 
 title_corpus_12 <- clean_corpus(title_corpus_12)
-```
 
 
-
-```{r}
 title_dtm_12 <- TermDocumentMatrix(title_corpus_12)
 title_matrix_12 <- as.matrix(title_dtm_12)
 title_v_12 <- sort(rowSums(title_matrix_12), decreasing=TRUE)
 title_dt_12 <- data.frame(word = names(title_v_12),freq=title_v_12)
-```
 
 
-```{r}
+
 title_dt_12$word <- gsub("twofourd" , "2,4-D" , title_dt_12$word)
-```
 
 
-```{r}
+
+
 words12 <- title_dt_12  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2012")
+  mutate(year = "2012") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
 
 ```{r eval=FALSE, include=FALSE}   
@@ -1428,14 +1271,12 @@ wordcloud(words = title_dt_12$word, freq = title_dt_12$freq, min.freq=1, scale=c
 ```{r}
 pdf_13 <- pdf_text("nc2013.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_13 <- pdf_13[19:117] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
 titledm_13 <- data.frame() # as data frame
 
 for (i in 1:length(title_13)) {
@@ -1443,21 +1284,20 @@ for (i in 1:length(title_13)) {
   titlelines_13 <- data.frame(names = title_13[[i]])
   titledm_13 <- bind_rows(titledm_13, titlelines_13)
 } 
-```
 
-```{r}
+
+
 titledm_13$names <- gsub("2,4-D" , "twofourd" , titledm_13$names)
-```
 
 
-```{r}
+
+
 title_tokens_13 <- titledm_13 %>%
   unnest_tokens(words, names)
-```
 
 
 
-```{r warning=FALSE, include=FALSE}
+
 authors_13 <- pdf_13[122:125]
 
 authorsdm_13 <- data.frame()
@@ -1472,14 +1312,15 @@ for (i in 1:length(authors_13)) {
 authors_tokens_13 <- authorsdm_13 %>%
   unnest_tokens(words, names) %>% 
   filter(words != "weed")
-```
 
-```{r warning=FALSE}
+
+
+
 titles_tokens_13 <- anti_join(title_tokens_13, authors_tokens_13, by = "words")
-```
 
 
-```{r include=FALSE}
+
+
 rm_author_13 <- c(1:12) 
 rm_authors_number_13 <-c()
 for (i in 1:length(rm_author_13)) {
@@ -1491,56 +1332,42 @@ for (i in 1:length(rm_author_13)) {
 rm_authors_13 <- data.frame(rm_authors_number_13) 
 rm_authors_13 <- rename(rm_authors_13, words = rm_authors_number_13) 
 rm_authors_13$words <- as.character(rm_authors_13$words) 
-```
 
 
 
-```{r }
 title_tokens_13 <- anti_join(title_tokens_13, rm_authors_13, by = "words") 
-title_tokens_13 <- anti_join(title_tokens_13, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_13 <- anti_join(title_tokens_13, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_13 <- anti_join(title_tokens_13, stopwords_tokens, by = "words") 
 title_tokens_13 <- anti_join(title_tokens_13, authors_tokens_13, by = "words") 
-```
 
 
 
-
-
-```{r}
 title_source_13 <- VectorSource(title_tokens_13$words)
 title_corpus_13 <- VCorpus(title_source_13)
-```
-
-
-
-```{r}
 title_corpus_13 <- clean_corpus(title_corpus_13)
-```
 
 
 
-```{r}
+
 title_dtm_13 <- TermDocumentMatrix(title_corpus_13)
 title_matrix_13 <- as.matrix(title_dtm_13)
 title_v_13 <- sort(rowSums(title_matrix_13), decreasing=TRUE)
 title_dt_13 <- data.frame(word = names(title_v_13),freq=title_v_13)
-```
 
 
-```{r}
+
 title_dt_13$word <- gsub("twofourd" , "2,4-D" , title_dt_13$word)
-```
 
 
 
-```{r}
 words13 <- title_dt_13  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2013")
+  mutate(year = "2013") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
 
 
@@ -1559,14 +1386,13 @@ wordcloud(words = title_dt_13$word, freq = title_dt_13$freq, min.freq=1, scale=c
 ```{r}
 pdf_14 <- pdf_text("nc2014.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_14 <- pdf_14[15:86] 
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_14 <- data.frame() # as data frame
 
 for (i in 1:length(title_14)) {
@@ -1574,21 +1400,21 @@ for (i in 1:length(title_14)) {
   titlelines_14 <- data.frame(names = title_14 [[i]])
   titledm_14 <- bind_rows(titledm_14, titlelines_14)
 } 
-```
 
-```{r}
+
+
+
 titledm_14$names <- gsub("2,4-D" , "twofourd" , titledm_14$names)
-```
 
 
-```{r}
+
+
 title_tokens_14 <- titledm_14 %>%
   unnest_tokens(words, names)
-```
 
 
 
-```{r warning=FALSE, include=FALSE}
+
 authors_14 <- pdf_14[87:90]
 
 authorsdm_14 <- data.frame()
@@ -1603,14 +1429,15 @@ for (i in 1:length(authors_14)) {
 authors_tokens_14 <- authorsdm_14 %>%
   unnest_tokens(words, names) %>% 
   filter(words != "weed")
-```
 
-```{r warning=FALSE}
+
+
+
 titles_tokens_14 <- anti_join(title_tokens_14, authors_tokens_14, by = "words")
-```
 
 
-```{r include=FALSE}
+
+
 rm_author_14 <- c(1:12) 
 rm_authors_number_14 <-c()
 for (i in 1:length(rm_author_14)) {
@@ -1622,53 +1449,45 @@ for (i in 1:length(rm_author_14)) {
 rm_authors_14 <- data.frame(rm_authors_number_14) 
 rm_authors_14 <- rename(rm_authors_14, words = rm_authors_number_14) 
 rm_authors_14$words <- as.character(rm_authors_14$words)
-```
 
 
 
-```{r }
+
 title_tokens_14 <- anti_join(title_tokens_14, rm_authors_14, by = "words") 
-title_tokens_14 <- anti_join(title_tokens_14, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_14 <- anti_join(title_tokens_14, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_14 <- anti_join(title_tokens_14, stopwords_tokens, by = "words") 
 title_tokens_14 <- anti_join(title_tokens_14, authors_tokens_14, by = "words") 
-```
 
 
 
-```{r}
+
 title_source_14 <- VectorSource(title_tokens_14$words)
 title_corpus_14 <- VCorpus(title_source_14)
-```
-
-
-
-```{r}
 title_corpus_14 <- clean_corpus(title_corpus_14)
-```
 
 
 
-```{r}
+
 title_dtm_14 <- TermDocumentMatrix(title_corpus_14)
 title_matrix_14 <- as.matrix(title_dtm_14)
 title_v_14 <- sort(rowSums(title_matrix_14), decreasing=TRUE)
 title_dt_14 <- data.frame(word = names(title_v_14),freq=title_v_14)
-```
 
 
-```{r}
+
+
 title_dt_14$word <- gsub("twofourd" , "2,4-D" , title_dt_14$word)
-```
 
 
-```{r}
+
 words14 <- title_dt_14  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2014")
+  mutate(year = "2014") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
 
 
@@ -1687,14 +1506,13 @@ wordcloud(words = title_dt_14$word, freq = title_dt_14$freq, min.freq=1, scale=c
 ```{r}
 pdf_15 <- pdf_text("nc2015.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_15 <- pdf_15[18:91] # need to check pdf (overlap)
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_15 <- data.frame() # as data frame
 
 for (i in 1:length(title_15)) {
@@ -1702,21 +1520,20 @@ for (i in 1:length(title_15)) {
   titlelines_15 <- data.frame(names = title_15[[i]])
   titledm_15 <- bind_rows(titledm_15, titlelines_15)
 } 
-```
 
-```{r}
+
+
+
 titledm_15$names <- gsub("2,4-D" , "twofourd" , titledm_15$names)
-```
 
 
-```{r}
+
 title_tokens_15 <- titledm_15 %>%
   unnest_tokens(words, names)
-```
 
 
 
-```{r warning=FALSE, include=FALSE}
+
 authors_15 <- pdf_15[93:98]
 
 authorsdm_15 <- data.frame()
@@ -1731,14 +1548,14 @@ for (i in 1:length(authors_15)) {
 authors_tokens_15 <- authorsdm_15 %>%
   unnest_tokens(words, names) %>% 
   filter(words != "weed")
-```
 
-```{r warning=FALSE}
+
+
 titles_tokens_15 <- anti_join(title_tokens_15, authors_tokens_15, by = "words")
-```
 
 
-```{r include=FALSE}
+
+
 rm_author_15 <- c(1:12) 
 rm_authors_number_15 <-c()
 for (i in 1:length(rm_author_15)) {
@@ -1750,52 +1567,46 @@ for (i in 1:length(rm_author_15)) {
 rm_authors_15 <- data.frame(rm_authors_number_15) 
 rm_authors_15 <- rename(rm_authors_15, words = rm_authors_number_15) 
 rm_authors_15$words <- as.character(rm_authors_15$words)
-```
 
 
-```{r }
+
+
+
 title_tokens_15 <- anti_join(title_tokens_15, rm_authors_15, by = "words") 
-title_tokens_15 <- anti_join(title_tokens_15, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_15 <- anti_join(title_tokens_15, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_15 <- anti_join(title_tokens_15, stopwords_tokens, by = "words") 
 title_tokens_15 <- anti_join(title_tokens_15, authors_tokens_15, by = "words") 
-```
 
 
-```{r}
+
 title_source_15 <- VectorSource(title_tokens_15$words)
 title_corpus_15 <- VCorpus(title_source_15)
-```
 
 
 
-```{r}
+
 title_corpus_15 <- clean_corpus(title_corpus_15)
-```
 
 
 
-```{r}
 title_dtm_15 <- TermDocumentMatrix(title_corpus_15)
 title_matrix_15 <- as.matrix(title_dtm_15)
 title_v_15 <- sort(rowSums(title_matrix_15), decreasing=TRUE)
 title_dt_15 <- data.frame(word = names(title_v_15),freq=title_v_15)
-```
 
 
-```{r}
+
 title_dt_15$word <- gsub("twofourd" , "2,4-D" , title_dt_15$word)
-```
 
 
-
-```{r}
 words15 <- title_dt_15  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2015")
+  mutate(year = "2015") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
 
 ```{r eval=FALSE, include=FALSE} 
@@ -1816,14 +1627,13 @@ wordcloud(words = title_dt_15$word, freq = title_dt_15$freq, min.freq=1, scale=c
 ```{r}
 pdf_16 <- pdf_text("nc2016.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_16 <- pdf_16[16:88] # need to check pdf (overlap)
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_16 <- data.frame() # as data frame
 
 for (i in 1:length(title_16)) {
@@ -1831,21 +1641,18 @@ for (i in 1:length(title_16)) {
   titlelines_16 <- data.frame(names = title_16[[i]])
   titledm_16 <- bind_rows(titledm_16, titlelines_16)
 } 
-```
 
-```{r}
+
+
+
 titledm_16$names <- gsub("2,4-D" , "twofourd" , titledm_16$names)
-```
 
 
-```{r}
 title_tokens_16 <- titledm_16 %>%
   unnest_tokens(words, names)
-```
 
 
 
-```{r warning=FALSE, include=FALSE}
 authors_16 <- pdf_16[90:93]
 
 authorsdm_16 <- data.frame()
@@ -1860,14 +1667,13 @@ for (i in 1:length(authors_16)) {
 authors_tokens_16 <- authorsdm_16 %>%
   unnest_tokens(words, names) %>% 
   filter(words != "weed")
-```
 
-```{r warning=FALSE}
+
+
 titles_tokens_16 <- anti_join(title_tokens_16, authors_tokens_16, by = "words")
-```
 
 
-```{r include=FALSE}
+
 rm_author_16 <- c(1:12) 
 rm_authors_number_16 <-c()
 for (i in 1:length(rm_author_16)) {
@@ -1879,53 +1685,42 @@ for (i in 1:length(rm_author_16)) {
 rm_authors_16 <- data.frame(rm_authors_number_16) 
 rm_authors_16 <- rename(rm_authors_16, words = rm_authors_number_16) 
 rm_authors_16$words <- as.character(rm_authors_16$words)
-```
 
 
-```{r }
+
 title_tokens_16 <- anti_join(title_tokens_16, rm_authors_16, by = "words") 
-title_tokens_16 <- anti_join(title_tokens_16, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_16 <- anti_join(title_tokens_16, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_16 <- anti_join(title_tokens_16, stopwords_tokens, by = "words") 
 title_tokens_16 <- anti_join(title_tokens_16, authors_tokens_16, by = "words") 
-```
 
 
-```{r}
+
 title_source_16 <- VectorSource(title_tokens_16$words)
 title_corpus_16 <- VCorpus(title_source_16)
-```
-
-
-
-```{r}
 title_corpus_16 <- clean_corpus(title_corpus_16)
-```
 
 
 
-```{r}
 title_dtm_16 <- TermDocumentMatrix(title_corpus_16)
 title_matrix_16 <- as.matrix(title_dtm_16)
 title_v_16 <- sort(rowSums(title_matrix_16), decreasing=TRUE)
 title_dt_16 <- data.frame(word = names(title_v_16),freq=title_v_16)
-```
 
 
-```{r}
 title_dt_16$word <- gsub("twofourd" , "2,4-D" , title_dt_16$word)
-```
 
 
-
-```{r}
 words16 <- title_dt_16  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2016")
+  mutate(year = "2016") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
+
+
 
 ```{r eval=FALSE, include=FALSE}   
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
@@ -1942,14 +1737,12 @@ wordcloud(words = title_dt_16$word, freq = title_dt_16$freq, min.freq=1, scale=c
 ```{r}
 pdf_17 <- pdf_text("nc2017.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_17 <- pdf_17[18:101] # need to check pdf (overlap)
-```
 
 
-```{r warning=FALSE, include=FALSE}
 titledm_17 <- data.frame() # as data frame
 
 for (i in 1:length(title_17)) {
@@ -1957,21 +1750,19 @@ for (i in 1:length(title_17)) {
   titlelines_17 <- data.frame(names = title_17[[i]])
   titledm_17 <- bind_rows(titledm_17, titlelines_17)
 } 
-```
 
-```{r}
+
+
 titledm_17$names <- gsub("2,4-D" , "twofourd" , titledm_17$names)
-```
 
 
-```{r}
+
 title_tokens_17 <- titledm_17 %>%
   unnest_tokens(words, names)
-```
 
 
 
-```{r warning=FALSE, include=FALSE}
+
 authors_17 <- pdf_17[102:107]
 
 authorsdm_17 <- data.frame()
@@ -1986,14 +1777,13 @@ for (i in 1:length(authors_17)) {
 authors_tokens_17 <- authorsdm_17 %>%
   unnest_tokens(words, names) %>% 
   filter(words != "weed")
-```
 
-```{r warning=FALSE}
+
+
 titles_tokens_17<- anti_join(title_tokens_17, authors_tokens_17, by = "words")
-```
 
 
-```{r include=FALSE}
+
 rm_author_17 <- c(1:12) 
 rm_authors_number_17 <-c()
 for (i in 1:length(rm_author_17)) {
@@ -2005,53 +1795,40 @@ for (i in 1:length(rm_author_17)) {
 rm_authors_17 <- data.frame(rm_authors_number_17) 
 rm_authors_17 <- rename(rm_authors_17, words = rm_authors_number_17) 
 rm_authors_17$words <- as.character(rm_authors_17$words)
-```
 
 
-```{r }
+
 title_tokens_17 <- anti_join(title_tokens_17, rm_authors_17, by = "words") 
-title_tokens_17 <- anti_join(title_tokens_17, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_17 <- anti_join(title_tokens_17, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_17 <- anti_join(title_tokens_17, stopwords_tokens, by = "words") 
 title_tokens_17 <- anti_join(title_tokens_17, authors_tokens_17, by = "words") 
-```
 
 
 
-```{r}
+
 title_source_17 <- VectorSource(title_tokens_17$words)
 title_corpus_17 <- VCorpus(title_source_17)
-```
-
-
-
-```{r}
 title_corpus_17 <- clean_corpus(title_corpus_17)
-```
 
 
 
-```{r}
 title_dtm_17 <- TermDocumentMatrix(title_corpus_17)
 title_matrix_17 <- as.matrix(title_dtm_17)
 title_v_17 <- sort(rowSums(title_matrix_17), decreasing=TRUE)
 title_dt_17 <- data.frame(word = names(title_v_17),freq=title_v_17)
-```
 
 
-```{r}
 title_dt_17$word <- gsub("twofourd" , "2,4-D" , title_dt_17$word)
-```
 
 
-
-```{r}
 words17 <- title_dt_17  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1) %>% 
-  mutate(year = "2017")
+  mutate(year = "2017") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
 
 ```{r eval=FALSE, include=FALSE}   
@@ -2070,14 +1847,13 @@ wordcloud(words = title_dt_17$word, freq = title_dt_17$freq, min.freq=1, scale=c
 ```{r}
 pdf_18 <- pdf_text("nc2018.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_18 <- pdf_18[16:107] # need to check pdf (overlap)
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_18 <- data.frame() # as data frame
 
 for (i in 1:length(title_18)) {
@@ -2085,21 +1861,20 @@ for (i in 1:length(title_18)) {
   titlelines_18 <- data.frame(names = title_18[[i]])
   titledm_18 <- bind_rows(titledm_18, titlelines_18)
 } 
-```
 
-```{r}
+
+
 titledm_18$names <- gsub("2,4-D" , "twofourd" , titledm_18$names)
-```
 
 
-```{r}
+
+
 title_tokens_18 <- titledm_18 %>%
   unnest_tokens(words, names)
-```
 
 
 
-```{r warning=FALSE, include=FALSE}
+
 authors_18 <- pdf_18[108:112]
 
 authorsdm_18 <- data.frame()
@@ -2114,14 +1889,15 @@ for (i in 1:length(authors_18)) {
 authors_tokens_18 <- authorsdm_18 %>%
   unnest_tokens(words, names) %>% 
   filter(words != "weed")
-```
 
-```{r warning=FALSE}
+
+
+
 titles_tokens_18 <- anti_join(title_tokens_18, authors_tokens_18, by = "words")
-```
 
 
-```{r include=FALSE}
+
+
 rm_author_18 <- c(1:12) 
 rm_authors_number_18 <-c()
 for (i in 1:length(rm_author_18)) {
@@ -2133,51 +1909,43 @@ for (i in 1:length(rm_author_18)) {
 rm_authors_18 <- data.frame(rm_authors_number_18) 
 rm_authors_18 <- rename(rm_authors_18, words = rm_authors_number_18) 
 rm_authors_18$words <- as.character(rm_authors_18$words)
-```
 
 
-```{r }
+
+
 title_tokens_18 <- anti_join(title_tokens_18, rm_authors_18, by = "words") 
-title_tokens_18 <- anti_join(title_tokens_18, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_18 <- anti_join(title_tokens_18, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_18 <- anti_join(title_tokens_18, stopwords_tokens, by = "words") 
 title_tokens_18 <- anti_join(title_tokens_18, authors_tokens_18, by = "words") 
-```
 
 
-```{r}
+
+
 title_source_18 <- VectorSource(title_tokens_18$words)
 title_corpus_18 <- VCorpus(title_source_18)
-```
-
-
-
-```{r}
 title_corpus_18 <- clean_corpus(title_corpus_18)
-```
 
 
 
-```{r}
 title_dtm_18 <- TermDocumentMatrix(title_corpus_18)
 title_matrix_18 <- as.matrix(title_dtm_18)
 title_v_18 <- sort(rowSums(title_matrix_18), decreasing=TRUE)
 title_dt_18 <- data.frame(word = names(title_v_18),freq=title_v_18)
-```
 
 
-```{r}
+
+
 title_dt_18$word <- gsub("twofourd" , "2,4-D" , title_dt_18$word)
-```
 
 
-```{r}
 words18 <- title_dt_18  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1)  %>% 
-  mutate(year = "2018") 
+  mutate(year = "2018") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
 
 ```{r eval=FALSE, include=FALSE}  
@@ -2191,21 +1959,18 @@ wordcloud(words = title_dt_18$word, freq = title_dt_18$freq, min.freq=1, scale=c
 
 
 
-
-
 # 2019
 
 ```{r}
 pdf_19 <- pdf_text("nc2019.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
 title_19 <- pdf_19[2:223] # need to check pdf (overlap)
-```
 
 
-```{r warning=FALSE, include=FALSE}
+
 titledm_19 <- data.frame() # as data frame
 
 for (i in 1:length(title_19)) {
@@ -2213,22 +1978,20 @@ for (i in 1:length(title_19)) {
   titlelines_19 <- data.frame(names = title_19[[i]])
   titledm_19 <- bind_rows(titledm_19, titlelines_19)
 } 
-```
 
-```{r}
+
+
+
 titledm_19$names <- gsub("2,4-D" , "twofourd" , titledm_19$names)
-```
 
 
-```{r}
+
+
 title_tokens_19 <- titledm_19 %>%
   unnest_tokens(words, names)
-```
 
 
 
-
-```{r warning=FALSE, include=FALSE}
 authors_19 <- pdf_18[108:112]
 
 authorsdm_19 <- data.frame()
@@ -2242,15 +2005,15 @@ for (i in 1:length(authors_19)) {
 #tokerization
 authors_tokens_19 <- authorsdm_19 %>%
   unnest_tokens(words, names) %>% 
-  filter(words != "weed")
-```
+  filter(words != "weed" & words != "palmer")
 
-```{r warning=FALSE}
+
+
 titles_tokens_19 <- anti_join(title_tokens_19, authors_tokens_19, by = "words")
-```
 
 
-```{r include=FALSE}
+
+
 rm_author_19 <- c(224:233) 
 rm_authors_number_19 <-c()
 for (i in 1:length(rm_author_19)) {
@@ -2262,53 +2025,44 @@ for (i in 1:length(rm_author_19)) {
 rm_authors_19 <- data.frame(rm_authors_number_19) 
 rm_authors_19 <- rename(rm_authors_19, words = rm_authors_number_19) 
 rm_authors_19$words <- as.character(rm_authors_19$words)
-```
 
 
-```{r }
+
 title_tokens_19 <- anti_join(title_tokens_19, rm_authors_19, by = "words") 
-title_tokens_19 <- anti_join(title_tokens_19, stop_wssaprogram_words_tokens, by = "words") 
+#title_tokens_19 <- anti_join(title_tokens_19, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_19 <- anti_join(title_tokens_19, stopwords_tokens, by = "words") 
 title_tokens_19 <- anti_join(title_tokens_19, authors_tokens_19, by = "words") 
-```
 
 
-```{r}
+
 title_source_19 <- VectorSource(title_tokens_19$words)
 title_corpus_19 <- VCorpus(title_source_19)
-```
-
-
-
-```{r}
 title_corpus_19 <- clean_corpus(title_corpus_19)
-```
 
 
-
-```{r}
 title_dtm_19 <- TermDocumentMatrix(title_corpus_19)
 title_matrix_19 <- as.matrix(title_dtm_19)
 title_v_19 <- sort(rowSums(title_matrix_19), decreasing=TRUE)
 title_dt_19 <- data.frame(word = names(title_v_19),freq=title_v_19)
-```
 
 
-```{r}
+
 title_dt_19$word <- gsub("twofourd" , "2,4-D" , title_dt_19$word)
-```
 
 
 
-```{r}
 words19 <- title_dt_19  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
   add_tally(freq, name="nn") %>% 
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1)  %>% 
-  mutate(year = "2019") 
+  mutate(year = "2019") %>% 
+  anti_join(stop_wssaprogram_words)
 ```
+
+
+
 
 
 ```{r message = FALSE, warning=FALSE, eval=FALSE, include=FALSE} 
@@ -2318,8 +2072,6 @@ set.seed(1234)
 wordcloud(words = title_dt_19$word, freq = title_dt_19$freq, min.freq=2, scale=c(4,.1),
            random.order=FALSE, rot.per=0.35, colors=pal)
 ```
-
-
 
 
 
@@ -2357,55 +2109,69 @@ ggplot(aes(freq/nn, fill = year)) +
 ```{r}
 freq_by_rank <- Data %>% 
   group_by(year) %>% 
-  mutate(rank = row_number(), 
-         `term frequency` = freq/nn)
+  mutate(rank = row_number())
 ```
 
 
 ```{r}
 freq_by_rank <- freq_by_rank %>% 
-  mutate(highlight = ifelse(word %in% c("palmer", "waterhemp", "dicamba", "2,4-D", "resistant",
-                                            "drift"), TRUE, FALSE),
+  mutate(highlight = ifelse(word %in% c("glufosinate", "imazethapyr", "foramsulfuron", "clopyralid", "mesotrione", "2,4-D", "dicamba", "glyphosate", "metolachlor",
+                                            "atrazine"), TRUE, FALSE),
+       variable_col = if_else(highlight == TRUE, word, "NA"))
+```
+
+```{r}
+freq_by_rank <- freq_by_rank %>% 
+  mutate(highlight = ifelse(word %in% c("palmer", "kochia", "horseweed", "grass", "nightshade", "waterhemp", "velvetleaf", "ragweed",
+                                            "foxtail"), TRUE, FALSE),
        variable_col = if_else(highlight == TRUE, word, "NA"))
 ```
 
 ```{r}
 #Set theme
 library(extrafont)
-font_family <- 'Arial'
+#font_family <- 'Arial' 
 background <- "#1D1D1D"
 text_colour <- "white"
 axis_colour <- "white"
 plot_colour <- "black"
-theme_style <- theme(text = element_text(family = font_family),
+theme_style <- theme(#text = element_text(family = font_family),
                   rect = element_rect(fill = background),
                   plot.background = element_rect(fill = background, color = NA),
                   plot.title = element_text(face = 'bold', size = 50, colour = text_colour),
-                  plot.subtitle = element_text(size = 25, colour = text_colour),
+                  plot.subtitle = element_text(size = 30, colour = text_colour),
                   plot.caption = element_text(size = 20, colour = text_colour),
                   panel.background = element_rect(fill = background, color = NA),
                   panel.border = element_blank(),
                   panel.grid.major.y = element_blank(),
                   panel.grid.major.x = element_blank(),
                   panel.grid.minor.x = element_blank(),
-                  plot.margin = unit(c(2, 2, 2, 2), "cm"),
-                  axis.title.y = element_text(face = 'bold', size = 40, colour = text_colour),
+                  plot.margin = unit(c(3, 0.5, 0.5, 0.5), "cm"), # top, left, bottom, right
+                  axis.title.y = element_text(face = 'bold', size = 40, 
+                                              colour = text_colour),
                   axis.title.x = element_blank(),
-                  axis.text.x = element_text(size = 35, colour= axis_colour, vjust = 14),
-                  axis.text.y = element_text(size = 25, colour = text_colour),
+                  axis.text.x.bottom = element_text(size = 45, colour= axis_colour, 
+                                                    vjust = 17),
+                  axis.text.x.top = element_text(size = 45, colour= axis_colour, 
+                                                    vjust = -14),
+                  axis.text.y = element_text(size = 30, colour = text_colour),
                   axis.ticks = element_blank(),
                   axis.line = element_blank(),
                   legend.text = element_text(size = 20, colour= text_colour),
                   legend.title = element_text(size = 25, colour= text_colour),
-                  legend.position="none")
+                  legend.position="none") 
+
 
 theme_set(theme_classic() + theme_style)
 
 #Set colour palette
-cols <- c("#FE5F55", "#4281A4", "#48A9A6", "#39393A", "#D4B483", "#E4DFDA", "#C1666B")
+cols <- c("#FE5F55", "#4281A4", "#48A9A6", "#D4B483", "#E4DFDA", "#C1666B", "#39393A")
 ```
-   
-                                     
+"2,4-D", "atrazine", "clopyralid", "dicamba", "foramsulfuron",  "glufosinate", "glyphosate", "imazethapyr",  "mesotrione", "metolachlor", " NA
+                                            
+                                           
+"foxtail", "horseweed", "Kochia",  NA,  "palmer", "ragweed", "velvetleaf", "waterhemp"
+                                                                  
                
 
 
@@ -2416,30 +2182,41 @@ freq_by_rank_1 <- freq_by_rank %>%
   mutate(year = as.double(year))
 
 ggplot(freq_by_rank_1, aes(x = year, y = rank, group = word)) +
-  geom_line(aes(color = variable_col), size = 2) +
-  geom_point(aes(color = variable_col), size = 6) +
+  geom_line(data = freq_by_rank_1 %>% filter(variable_col == "NA"),
+                                      color = "#39393A", size = 4) +
+  geom_point(data = freq_by_rank_1 %>% filter(variable_col == "NA"),
+                                      color = "#39393A", size = 10) +
+  geom_line(data = freq_by_rank_1 %>% filter(variable_col != "NA"),
+                                       aes(color = variable_col), size = 4) +
+  geom_point(data = freq_by_rank_1 %>% filter(variable_col != "NA"),
+                                       aes(color = variable_col), size = 10) +
   scale_y_reverse(breaks = 100:1) +
   scale_x_continuous(breaks = seq(2001, 2019, 2), limits= c(2000, 2020), 
-                     expand = c(.05, .05)) +
+                     expand = c(.05, .05), sec.axis = dup_axis()) +
   geom_text(data = freq_by_rank_1 %>%  filter(year == "2001"),
             aes(label = word, x = 2000.8, color = variable_col),
             hjust = "right",
             fontface = "bold",
-            size = 10) +
+            size = 11) +
   geom_text(data = freq_by_rank_1 %>%  filter(year == "2019"),
             aes(label = word, x = 2019.2, color = variable_col),
             hjust = "left",
             fontface = "bold",
-            size = 10) +
+            size = 11) +
   coord_cartesian(ylim = c(101,1)) +
-  scale_color_manual(values = cols) +
-  #scale_y_reverse(breaks = 1:nrow(NY_kids)) +
-  labs(title = "A NCWSS Meeting text analysis of title and abstracts from 2001 through 2019",
-       subtitle = "", y= "Rank",
-       caption = "Vizualisation: @maxwelco | Source: NCWSS")
+  scale_color_manual(values = c("#FE5F55", "#FFFF60", "#E1DB8F", "#D0FFFF", "#FF78FF", 
+  "#4281A4", "#48A9A6", "#D4B483", "#E4DFDA", # 
+                                "#C1666B", "#39393A")) +
+#   scale_color_manual(values = c("#F2D9F3", "#00E5E5", "#DEB887", "#FAC8C8", "#39393A", 
+#                                 "#FA9664", "#FF4040",    
+#                               "#48DE7A", "#F5F5DC", "#FAFA00")) +
+#scale_y_reverse(breaks = 1:nrow(NY_kids)) +
+  labs(title = "NCWSS Meeting text analysis of title and abstracts from 2001 through 2019",
+       subtitle = "Ranking the top 100 words of each NCWSS proceeding meetings with selected highlighted weeds", y= "Rank",
+       caption = "Visualization: @maxwelco adapted from @JaredBraggins | Source: NCWSS") 
 
 #Export plot
-ggsave("word_rank.png", width = 30, height = 45, dpi=600)
+ggsave("word_rank_herb.pdf", width = 40, height = 60, dpi=300, limitsize = FALSE)
 ```
 
 
