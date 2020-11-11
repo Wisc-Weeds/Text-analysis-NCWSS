@@ -2236,23 +2236,23 @@ ggplot(freq_by_rank_1, aes(x = year, y = rank, group = word)) +
             fontface = "bold",
             size = 11) +
   coord_cartesian(ylim = c(101,1)) +
-#  scale_color_manual(values = c("#FE5F55", "#FFFF60", "#E1DB8F", 
-#                                "#D0FFFF", "#FF78FF", 
-#                                "#4281A4", "#48A9A6", "#D4B483", 
-#                                "#E4DFDA", 
-#                                "#C1666B", "#39393A")) +
-   scale_color_manual(values = c("#F2D9F3", "#F2D9F3", "#00E5E5", "#DEB887", 
-                                 "#FAC8C8", "#39393A", 
-                                 "#FA9664", "#FF4040",    
-                                 "#48DE7A", "#942DC7", "#F5F5DC", 
-                                 "#FAFA00")) +
+  scale_color_manual(values = c("#FFFF60", "#8EF78E", 
+                                "#D0FFFF", "#FF78FF", 
+                                "#4281A4", "#48A9A6", "#D4B483", 
+                                "#E4DFDA", "#FE5F55",
+                                "#C1666B", "#39393A")) +
+#   scale_color_manual(values = c("#F2D9F3", "#F2D9F3", "#00E5E5", "#DEB887", 
+#                                 "#FAC8C8", "#39393A", 
+#                                 "#FA9664", "#FF4040",    
+#                                 "#48DE7A", "#942DC7", "#F5F5DC", 
+#                                 "#FAFA00")) +
 #scale_y_reverse(breaks = 1:nrow(NY_kids)) +
   labs(title = "NCWSS Meeting text analysis of title and abstracts from 2001 through 2019",
-       subtitle = "Ranking the top 100 words of each NCWSS proceeding meetings with selected highlighted weeds", y= "Rank",
+       subtitle = "Rank of the top 100 words of each NCWSS annual meeting proceeding with selected highlighted herbicides", y= "Rank",
        caption = "Visualization: @maxwelco adapted from @JaredBraggins | Source: NCWSS") 
 
 #Export plot
-ggsave("word_rank_weeds.pdf", width = 40, height = 60, dpi=300, limitsize = FALSE)
+ggsave("word_rank_herb.pdf", width = 40, height = 60, dpi=300, limitsize = FALSE)
 ```
 
 
