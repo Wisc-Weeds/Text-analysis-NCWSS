@@ -62,7 +62,7 @@ for (i in 1:length(title_01)) {
 
 
 titledm_01$names <- gsub("2,4-D" , "twofourd" , titledm_01$names)
-
+titledm_01$names <- gsub("marestail" , "horseweed" , titledm_01$names)
 
 
 
@@ -119,11 +119,10 @@ words01 <- title_dt_01  %>%
   mutate_at(4, round, 1) %>% 
   mutate(year = "2001") %>% 
   anti_join(stop_wssaprogram_words) 
-```
 
 
 
-```{r eval=FALSE} 
+
 # need to stop footnotes' word
 
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
@@ -140,13 +139,17 @@ wordcloud(words = title_dt_01$word, freq = title_dt_01$freq, min.freq=1, scale=c
 ```{r}
 pdf_02 <- pdf_text("nc2002.pdf") %>% 
   strsplit(split = "\n")
-```
 
-```{r}
+
+
+
+
 title_02 <- pdf_02[5:211] 
-```
 
-```{r warning=FALSE, include=FALSE}
+
+
+
+
 titledm_02 <- data.frame() # as data frame
 
 for (i in 1:length(title_02)) {
@@ -154,19 +157,21 @@ for (i in 1:length(title_02)) {
   titlelines <- data.frame(names = title_02[[i]])
   titledm_02 <- bind_rows(titledm_02, titlelines)
 } 
-```
 
-```{r}
+
+
+
 titledm_02$names <- gsub("2,4-D" , "twofourd" , titledm_02$names)
-```
+titledm_02$names <- gsub("marestail" , "horseweed" , titledm_02$names)
 
-```{r}
+
+
 title_tokens_02 <- titledm_02 %>%
   unnest_tokens(words, names)
-```
 
 
-```{r eval=FALSE, include=FALSE}
+
+
 authors_02 <- read_html("http://ncwss.org/proceed/2002/Proc2002/abstracts/author2.htm") %>% 
   html_nodes(xpath = "/html/body/p[.]") %>%
   html_text() 
@@ -176,34 +181,35 @@ authors_02 <- data_frame(authors_02)
 authors_tokens_02 <- authors_02 %>%
   unnest_tokens(words, authors_02) %>% 
   filter(words != "weed")
-```
 
 
-```{r }
+
+
 #title_tokens_02 <- anti_join(title_tokens_02, stop_wssaprogram_words_tokens, by = "words") 
 title_tokens_02 <- anti_join(title_tokens_02, stopwords_tokens, by = "words") 
 title_tokens_02 <- anti_join(title_tokens_02, authors_tokens_02, by = "words") 
-```
 
 
-```{r}
+
 title_source_02 <- VectorSource(title_tokens_02$words)
 title_corpus_02 <- VCorpus(title_source_02)
 title_corpus_02 <- clean_corpus(title_corpus_02)
-```
 
-```{r}
+
+
+
 title_dtm_02 <- TermDocumentMatrix(title_corpus_02)
 title_matrix_02 <- as.matrix(title_dtm_02)
 title_v_02 <- sort(rowSums(title_matrix_02), decreasing=TRUE)
 title_dt_02 <- data.frame(word = names(title_v_02),freq=title_v_02)
-```
 
-```{r}
+
+
+
 title_dt_02$word <- gsub("twofourd" , "2,4-D" , title_dt_02$word)
-```
 
-```{r}
+
+
 words02 <- title_dt_02  %>% 
   select(word, freq) %>% 
   #group_by(word) %>% 
@@ -256,7 +262,7 @@ for (i in 1:length(title_03)) {
 
 
 titledm_03$names <- gsub("2,4-D" , "twofourd" , titledm_03$names)
-
+titledm_03$names <- gsub("marestail" , "horseweed" , titledm_03$names)
 
 
 
@@ -355,6 +361,7 @@ for (i in 1:length(title_04)) {
 
 
 titledm_04$names <- gsub("2,4-D" , "twofourd" , titledm_04$names)
+titledm_04$names <- gsub("marestail" , "horseweed" , titledm_04$names)
 
 
 
@@ -453,7 +460,7 @@ for (i in 1:length(title_05)) {
 
 
 titledm_05$names <- gsub("2,4-D" , "twofourd" , titledm_05$names)
-
+titledm_05$names <- gsub("marestail" , "horseweed" , titledm_05$names)
 
 
 
@@ -551,7 +558,7 @@ for (i in 1:length(title_06)) {
 
 
 titledm_06$names <- gsub("2,4-D" , "twofourd" , titledm_06$names)
-
+titledm_06$names <- gsub("marestail" , "horseweed" , titledm_06$names)
 
 
 
@@ -643,7 +650,7 @@ for (i in 1:length(title_07)) {
 
 
 titledm_07$names <- gsub("2,4-D" , "twofourd" , titledm_07$names)
-
+titledm_07$names <- gsub("marestail" , "horseweed" , titledm_07$names)
 
 
 title_tokens_07 <- titledm_07 %>%
@@ -659,7 +666,8 @@ authors_07 <- c(authors_07)
 authors_07 <- data_frame(authors_07)
 #tokerization
 authors_tokens_07 <- authors_07 %>%
-  unnest_tokens(words, authors_07)
+  unnest_tokens(words, authors_07) %>% 
+  filter(words != "palmer")
 
 
 
@@ -737,6 +745,8 @@ for (i in 1:length(title_08)) {
 
 
 titledm_08$names <- gsub("2,4-D" , "twofourd" , titledm_08$names)
+titledm_08$names <- gsub("marestail" , "horseweed" , titledm_08$names)
+
 
 
 
@@ -825,7 +835,7 @@ for (i in 1:length(title_09)) {
 
 
 titledm_09$names <- gsub("2,4-D" , "twofourd" , titledm_09$names)
-
+titledm_09$names <- gsub("marestail" , "horseweed" , titledm_09$names)
 
 
 title_tokens_09 <- titledm_09 %>%
@@ -940,6 +950,8 @@ for (i in 1:length(title_10)) {
 
 
 titledm_10$names <- gsub("2,4-D" , "twofourd" , titledm_10$names)
+titledm_10$names <- gsub("marestail" , "horseweed" , titledm_10$names)
+
 
 
 
@@ -1061,6 +1073,8 @@ for (i in 1:length(title_11)) {
 
 
 titledm_11$names <- gsub("2,4-D" , "twofourd" , titledm_11$names)
+titledm_11$names <- gsub("marestail" , "horseweed" , titledm_11$names)
+
 
 
 
@@ -1177,7 +1191,7 @@ for (i in 1:length(title_12)) {
 
 
 titledm_12$names <- gsub("2,4-D" , "twofourd" , titledm_12$names)
-
+titledm_12$names <- gsub("marestail" , "horseweed" , titledm_12$names)
 
 
 title_tokens_12 <- titledm_12 %>%
@@ -1288,15 +1302,12 @@ for (i in 1:length(title_13)) {
 
 
 titledm_13$names <- gsub("2,4-D" , "twofourd" , titledm_13$names)
-
+titledm_13$names <- gsub("marestail" , "horseweed" , titledm_13$names)
 
 
 
 title_tokens_13 <- titledm_13 %>%
   unnest_tokens(words, names)
-
-
-
 
 authors_13 <- pdf_13[122:125]
 
@@ -1311,7 +1322,8 @@ for (i in 1:length(authors_13)) {
 #tokerization
 authors_tokens_13 <- authorsdm_13 %>%
   unnest_tokens(words, names) %>% 
-  filter(words != "weed")
+  filter(words != "weed" & words != "palmer") 
+  
 
 
 
@@ -1434,7 +1446,7 @@ authors_tokens_14 <- authorsdm_14 %>%
 
 
 titles_tokens_14 <- anti_join(title_tokens_14, authors_tokens_14, by = "words")
-
+titledm_14$names <- gsub("marestail" , "horseweed" , titledm_14$names)
 
 
 
@@ -1525,6 +1537,8 @@ for (i in 1:length(title_15)) {
 
 
 titledm_15$names <- gsub("2,4-D" , "twofourd" , titledm_15$names)
+titledm_15$names <- gsub("marestail" , "horseweed" , titledm_15$names)
+
 
 
 
@@ -1646,6 +1660,8 @@ for (i in 1:length(title_16)) {
 
 
 titledm_16$names <- gsub("2,4-D" , "twofourd" , titledm_16$names)
+titledm_16$names <- gsub("marestail" , "horseweed" , titledm_16$names)
+
 
 
 title_tokens_16 <- titledm_16 %>%
@@ -1754,7 +1770,7 @@ for (i in 1:length(title_17)) {
 
 
 titledm_17$names <- gsub("2,4-D" , "twofourd" , titledm_17$names)
-
+titledm_17$names <- gsub("marestail" , "horseweed" , titledm_17$names)
 
 
 title_tokens_17 <- titledm_17 %>%
@@ -1865,7 +1881,7 @@ for (i in 1:length(title_18)) {
 
 
 titledm_18$names <- gsub("2,4-D" , "twofourd" , titledm_18$names)
-
+titledm_18$names <- gsub("marestail" , "horseweed" , titledm_18$names)
 
 
 
@@ -1888,7 +1904,7 @@ for (i in 1:length(authors_18)) {
 #tokerization
 authors_tokens_18 <- authorsdm_18 %>%
   unnest_tokens(words, names) %>% 
-  filter(words != "weed")
+  filter(words != "weed" & words != "palmer")
 
 
 
@@ -1948,6 +1964,9 @@ words18 <- title_dt_18  %>%
   anti_join(stop_wssaprogram_words)
 ```
 
+
+
+
 ```{r eval=FALSE, include=FALSE}  
 pal <- brewer.pal(8,"Dark2") #selecting the color palette
 
@@ -1983,7 +2002,7 @@ for (i in 1:length(title_19)) {
 
 
 titledm_19$names <- gsub("2,4-D" , "twofourd" , titledm_19$names)
-
+titledm_19$names <- gsub("marestail" , "horseweed" , titledm_19$names)
 
 
 
@@ -2048,6 +2067,7 @@ title_dt_19 <- data.frame(word = names(title_v_19),freq=title_v_19)
 
 
 title_dt_19$word <- gsub("twofourd" , "2,4-D" , title_dt_19$word)
+  
 
 
 
@@ -2058,8 +2078,9 @@ words19 <- title_dt_19  %>%
   mutate(Perc=(freq/nn)*100) %>% 
   mutate_at(4, round, 1)  %>% 
   mutate(year = "2019") %>% 
-  anti_join(stop_wssaprogram_words)
+  anti_join(stop_wssaprogram_words) 
 ```
+
 
 
 
@@ -2113,6 +2134,14 @@ freq_by_rank <- Data %>%
 ```
 
 
+
+
+```{r}
+freq_by_rank %>% 
+  filter(year == "2019" & word == "horseweed")
+```
+
+
 ```{r}
 freq_by_rank <- freq_by_rank %>% 
   mutate(highlight = ifelse(word %in% c("glufosinate", "imazethapyr", "foramsulfuron", "clopyralid", "mesotrione", "2,4-D", "dicamba", "glyphosate", "metolachlor",
@@ -2122,7 +2151,7 @@ freq_by_rank <- freq_by_rank %>%
 
 ```{r}
 freq_by_rank <- freq_by_rank %>% 
-  mutate(highlight = ifelse(word %in% c("palmer", "kochia", "horseweed", "grass", "nightshade", "waterhemp", "velvetleaf", "ragweed",
+  mutate(highlight = ifelse(word %in% c("amaranth", "palmer", "kochia", "horseweed", "grass", "nightshade", "waterhemp", "velvetleaf", "ragweed", "sunflower",
                                             "foxtail"), TRUE, FALSE),
        variable_col = if_else(highlight == TRUE, word, "NA"))
 ```
@@ -2172,7 +2201,10 @@ cols <- c("#FE5F55", "#4281A4", "#48A9A6", "#D4B483", "#E4DFDA", "#C1666B", "#39
                                            
 "foxtail", "horseweed", "Kochia",  NA,  "palmer", "ragweed", "velvetleaf", "waterhemp"
                                                                   
-               
+```{r}
+words19
+```
+          
 
 
 ```{r}
@@ -2204,19 +2236,23 @@ ggplot(freq_by_rank_1, aes(x = year, y = rank, group = word)) +
             fontface = "bold",
             size = 11) +
   coord_cartesian(ylim = c(101,1)) +
-  scale_color_manual(values = c("#FE5F55", "#FFFF60", "#E1DB8F", "#D0FFFF", "#FF78FF", 
-  "#4281A4", "#48A9A6", "#D4B483", "#E4DFDA", # 
-                                "#C1666B", "#39393A")) +
-#   scale_color_manual(values = c("#F2D9F3", "#00E5E5", "#DEB887", "#FAC8C8", "#39393A", 
-#                                 "#FA9664", "#FF4040",    
-#                               "#48DE7A", "#F5F5DC", "#FAFA00")) +
+#  scale_color_manual(values = c("#FE5F55", "#FFFF60", "#E1DB8F", 
+#                                "#D0FFFF", "#FF78FF", 
+#                                "#4281A4", "#48A9A6", "#D4B483", 
+#                                "#E4DFDA", 
+#                                "#C1666B", "#39393A")) +
+   scale_color_manual(values = c("#F2D9F3", "#F2D9F3", "#00E5E5", "#DEB887", 
+                                 "#FAC8C8", "#39393A", 
+                                 "#FA9664", "#FF4040",    
+                                 "#48DE7A", "#942DC7", "#F5F5DC", 
+                                 "#FAFA00")) +
 #scale_y_reverse(breaks = 1:nrow(NY_kids)) +
   labs(title = "NCWSS Meeting text analysis of title and abstracts from 2001 through 2019",
        subtitle = "Ranking the top 100 words of each NCWSS proceeding meetings with selected highlighted weeds", y= "Rank",
        caption = "Visualization: @maxwelco adapted from @JaredBraggins | Source: NCWSS") 
 
 #Export plot
-ggsave("word_rank_herb.pdf", width = 40, height = 60, dpi=300, limitsize = FALSE)
+ggsave("word_rank_weeds.pdf", width = 40, height = 60, dpi=300, limitsize = FALSE)
 ```
 
 
