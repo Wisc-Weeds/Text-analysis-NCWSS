@@ -1,0 +1,49 @@
+---
+title: "tidy_ncwss"
+author: "Maxwel Coura Oliveira"
+date: "2/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = TRUE,
+  warning = TRUE
+  )
+```
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(textreadr)
+library(pdftools)
+```
+
+```{r}
+pdf_data <- as_tibble(2001:2019) %>% 
+  rename(year = value)
+```
+
+```{r}
+pdfs <- paste("docs", "/", list.files("docs", pattern = "*.pdf"), sep = "")
+pdf_names <- list.files("docs", pattern = "*.pdf")  
+pdfs_text <- map(pdfs, pdftools::pdf_text)
+```
+
+```{r}
+pdf <- data_frame(document = pdf_names, text = pdfs_text) %>% 
+  mutate(year = 2001:2019)
+```
+
+```{r}
+pdf1 <- pdf %>% 
+  unnest %>% # pdfs_text is a list
+  unnest_tokens(word, text, strip_numeric = TRUE)
+```
+
+```{r}
+pdf1 %>% 
+  anti_join(tidytext::get_stopwords("en"))
+```
+

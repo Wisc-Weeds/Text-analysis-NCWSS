@@ -41,7 +41,7 @@ clean_corpus <- function(corpus){
 # 2001
 
 ```{r}
-pdf_01 <- pdf_text("nc2001.pdf") %>% 
+pdf_01 <- pdf_text("docs/nc2001.pdf") %>% 
   strsplit(split = "\n")
 
 
