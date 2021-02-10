@@ -52,7 +52,7 @@ stopwords_tokens <- stopwords %>%
 stop_wssaprogram_words <- c("janet", "harrington", "calvin", "don", "thelen", "fitzpatrick",
                             "messersmith", "sharie", "fjell", "kerr", "emerson", "nafziger", 	"vollmer", 
                             "kathie", "colby", "baughman", "jennifer", "sij", "kalmowitz", 
-                            "natalie","crop", "location",
+                            "natalie","crop", "location", "ha", "g", "d",
                             "william", "dept", "knezevic", "adjunct", "assistant",
                             "univ", "ames", "michael", "mark", "dallas", "associate",
                             "david", "manhattan", "urbana", "bernard",

@@ -18,6 +18,7 @@ library(tidyverse)
 library(tidytext)
 library(textreadr)
 library(pdftools)
+library(ggtext)
 ```
 
 
@@ -52,6 +53,7 @@ stopwords <- get_stopwords("en", source = c("smart")) %>%
 ```{r cleaning}
 pdf2 <- pdf1 %>% 
   anti_join(stopwords, by = "word") %>% 
+  anti_join(stop_wssaprogram_words, by = "word") %>% 
   mutate(word = str_replace(word, "twofourd", "2,4-d")) %>% 
   group_by(year) %>%
   mutate(line = row_number()) 
@@ -71,12 +73,6 @@ pdf3 <- pdf2 %>%
 
 
 
-```{r}
-pdf4 <- pdf3 %>% 
-  mutate(highlight = ifelse(word %in% c("glufosinate", "imazethapyr", "foramsulfuron", "clopyralid", "mesotrione", "2,4-D", "dicamba", "glyphosate", "metolachlor",
-                                            "atrazine"), TRUE, FALSE),
-       variable_col = if_else(highlight == TRUE, word, "NA"))
-```
 
 
 ```{r}
@@ -84,6 +80,50 @@ pdf4 <- pdf3 %>%
   mutate(highlight = ifelse(word %in% c("amaranth", "palmer", "kochia", "horseweed", "grass", "nightshade", "waterhemp", "velvetleaf", "ragweed", "sunflower",
                                             "foxtail"), TRUE, FALSE),
        variable_col = if_else(highlight == TRUE, word, "NA"))
+```
+
+
+
+```{r}
+#Set theme
+library(extrafont)
+#font_family <- 'Arial' 
+background <- "#1D1D1D"
+text_colour <- "white"
+axis_colour <- "white"
+plot_colour <- "black"
+theme_style <- theme(#text = element_text(family = font_family),
+                  rect = element_rect(fill = background),
+                  plot.background = element_rect(fill = background, color = NA),
+                  plot.title = element_markdown(family = "Arial Rounded MT Bold",
+                                            face = 'bold', size = 50, colour = text_colour),
+                  plot.subtitle = element_text(size = 30, colour = text_colour),
+                  plot.caption = element_text(size = 20, colour = text_colour),
+                  panel.background = element_rect(fill = background, color = NA),
+                  panel.border = element_blank(),
+                  panel.grid.major.y = element_blank(),
+                  panel.grid.major.x = element_blank(),
+                  panel.grid.minor.x = element_blank(),
+                  plot.margin = unit(c(3, 0.5, 0.5, 0.5), "cm"), # top, left, bottom, right
+                  axis.title.y = element_text(face = 'bold', size = 40, 
+                                              colour = text_colour),
+                  axis.title.x = element_blank(),
+                  axis.text.x.bottom = element_text(size = 45, colour= axis_colour, 
+                                                    vjust = 17),
+                  axis.text.x.top = element_text(size = 45, colour= axis_colour, 
+                                                    vjust = -14),
+                  axis.text.y = element_text(size = 30, colour = text_colour),
+                  axis.ticks = element_blank(),
+                  axis.line = element_blank(),
+                  legend.text = element_text(size = 20, colour= text_colour),
+                  legend.title = element_text(size = 25, colour= text_colour),
+                  legend.position="none") 
+
+
+theme_set(theme_classic() + theme_style)
+
+#Set colour palette
+cols <- c("#FE5F55", "#4281A4", "#48A9A6", "#D4B483", "#E4DFDA", "#C1666B", "#39393A")
 ```
 
 
@@ -117,11 +157,11 @@ pdf4 %>%
                                  "#FAC8C8", "#39393A", 
                                  "#FA9664", "#FF4040",    
                                  "#48DE7A", "#942DC7", "#F5F5DC", 
-                                 "#FAFA00"))
+                                 "#FAFA00")) +
     labs(title = "NCWSS Meeting text analysis of title and abstracts from 2001 through 2019",
        subtitle = "Rank of the top 100 words of each NCWSS annual meeting proceeding with selected highlighted herbicides", 
        y= "Rank",
-       caption = "Visualization: @maxwelco adapted from @JaredBraggins | Source: NCWSS") 
+       caption = "Visualization: @maxwelco adapted from @JaredBraggins | Source: NCWSS")  +
 
 #Export plot
 ggsave("word_rank_herb.pdf", width = 40, height = 60, dpi=300, limitsize = FALSE)
