@@ -1,6 +1,4 @@
 
-
-
 # first names
 first <- corpora("humans/firstNames")
 stopwords_first <- c(first$firstNames)
