@@ -161,7 +161,7 @@ stop_wssaprogram_words <- c("janet", "harrington", "calvin", "don", "thelen", "f
                             "kamienski", "christopher", "romina", "stevan", "terry", "renner",
                             "wolf", "kenneth", "karen", "gerard", "harankhedkar", "golus", "w.donald",
                             "bauman", "czapar", "greg", "dahl", "gednalske", "michaeland", "jan", "joe",
-                            "gerald", "dinicola", "beverly", "scientist", "addendum",
+                            "gerald", "dinicola", "beverly", "scientist", "addendum", "r1",
                             "durgan", "stoltenberg", "annual", "proc", "symbols", "agronomy"
                             )
 
